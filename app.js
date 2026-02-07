@@ -6,6 +6,8 @@ const cookieParser = require("cookie-parser");
 const contactRoutes = require('./routes/contactRoutes')
 const userRoutes = require('./routes/userRoutes')
 const projectRoutes = require('./routes/projectRoutes')
+const formRoutes = require('./routes/formRoutes')
+
 const rateLimiter = require("./middleware/rateLimiter");
 const adminRoutes = require('./routes/adminRoutes');
 const { getConnectionFromPool } = require("./config/connection");
@@ -15,8 +17,8 @@ const app = express();
 
 app.use(cors({
   origin: [
-    // "https://www.iccdinternalsystem.matzsolutions.com",
-    // "https://iccdinternalsystem.matzsolutions.com/login",
+    "https://ssesp.matzsolutions.com/",
+    "https://www.ssesp.matzsolutions.com/",
     "http://localhost:5173"
   ], credentials: true,
 }));
@@ -44,9 +46,12 @@ app.get("/", (req, res) => {
 getConnectionFromPool();
 
 // Use routes after middlewares
-app.use("/api/contact", contactRoutes);
-app.use('/api/admin', adminRoutes);
-app.use("/auth", userRoutes);
+app.use("/api/form", formRoutes);
+
+// app.use("/api/contact", contactRoutes);
+// app.use('/api/admin', adminRoutes);
+// app.use("/auth", userRoutes);
+
 // app.use("/project", projectRoutes);
 
 // local connection
