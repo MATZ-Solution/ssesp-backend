@@ -6,7 +6,7 @@ const cookieParser = require("cookie-parser");
 const contactRoutes = require('./routes/contactRoutes')
 const userRoutes = require('./routes/userRoutes')
 const projectRoutes = require('./routes/projectRoutes')
-const formRoutes = require('./routes/formRoutes')
+const formRoutes = require('./routes/candidateRoutes')
 
 const rateLimiter = require("./middleware/rateLimiter");
 const adminRoutes = require('./routes/adminRoutes');
@@ -46,7 +46,7 @@ app.get("/", (req, res) => {
 getConnectionFromPool();
 
 // Use routes after middlewares
-app.use("/api/form", formRoutes);
+app.use("/api/candidate", formRoutes);
 
 // app.use("/api/contact", contactRoutes);
 // app.use('/api/admin', adminRoutes);
