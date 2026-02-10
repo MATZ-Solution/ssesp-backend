@@ -4,9 +4,21 @@ const { getTotalPage } = require("../helper/getTotalPage");
 exports.addApplicantInfo = async function (req, res) {
   const { studentName, gender, studentBForm, dob, religion } = req.body;
   const { userId } = req.user;
+  const file = req.files;
+
+  console.log("file: ", file);
   try {
-    const values = [userId, studentName, gender, studentBForm, dob, religion];
-    const insertProjectQuery = `INSERT INTO applicants_info(applicantID, studentName, gender, studentBForm, dob, religion) VALUES (?,?,?,?,?,?) `;
+    const values = [
+      userId,
+      studentName,
+      gender,
+      studentBForm,
+      dob,
+      religion,
+      file.location,
+      file.key,
+    ];
+    const insertProjectQuery = `INSERT INTO applicants_info(applicantID, studentName, gender, studentBForm, dob, religion, fileUrl, fileKey) VALUES (?,?,?,?,?,?) `;
 
     const insertFileResult = await queryRunner(insertProjectQuery, values);
 
@@ -16,11 +28,11 @@ exports.addApplicantInfo = async function (req, res) {
         message: "Form submitted successfully.",
       });
     } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to submit form.",
+      });
     }
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Failed to submit form.",
-    });
   } catch (error) {
     console.log("Error: ", error);
     return res.status(500).json({
@@ -31,14 +43,30 @@ exports.addApplicantInfo = async function (req, res) {
 };
 
 exports.addApplicantGuardianInfo = async function (req, res) {
-
   const { userId } = req.user;
-  const { fatherName, fatherCNIC, domicileDistrict, guardianName, guardianContact, contact1, contact2 } = req.body;
-  
-  console.log("body: ", req.body)
-  
+  const {
+    fatherName,
+    fatherCNIC,
+    domicileDistrict,
+    guardianName,
+    guardianContact,
+    contact1,
+    contact2,
+  } = req.body;
+
+  console.log("body: ", req.body);
+
   try {
-    const values = [fatherName, fatherCNIC, domicileDistrict, guardianName, guardianContact, contact1, contact2, userId];
+    const values = [
+      fatherName,
+      fatherCNIC,
+      domicileDistrict,
+      guardianName,
+      guardianContact,
+      contact1,
+      contact2,
+      userId,
+    ];
     const insertProjectQuery = `UPDATE applicants_info SET fatherName = ?, fatherCNIC = ?, domicileDistrict = ?, guardianName= ?,
      guardianContact= ?, contact1= ?, contact2= ? WHERE id = ? `;
 
@@ -65,12 +93,11 @@ exports.addApplicantGuardianInfo = async function (req, res) {
 };
 
 exports.addApplicantAddressInfo = async function (req, res) {
-
   const { userId } = req.user;
   const { postalAddress, district, city } = req.body;
-  
-  console.log("body: ", req.body)
-  
+
+  console.log("body: ", req.body);
+
   try {
     const values = [postalAddress, district, city, userId];
     const insertProjectQuery = `UPDATE applicants_info SET postalAddress = ?, district = ?, city = ? 
@@ -99,18 +126,32 @@ exports.addApplicantAddressInfo = async function (req, res) {
 };
 
 exports.addApplicantSchoolInfo = async function (req, res) {
-
   const { userId } = req.user;
-  const { schoolName, schoolCategory, schoolSemisCode, studyingInClass, enrollmentYear,
-    schoolGRNo, headmasterName, headmasterContact
-   } = req.body;
-  
-  console.log("body: ", req.body)
-  
-  try {
+  const {
+    schoolName,
+    schoolCategory,
+    schoolSemisCode,
+    studyingInClass,
+    enrollmentYear,
+    schoolGRNo,
+    headmasterName,
+    headmasterContact,
+  } = req.body;
 
-    const values = [schoolName, schoolCategory, schoolSemisCode, studyingInClass, enrollmentYear,
-    schoolGRNo, headmasterName, headmasterContact, userId];
+  console.log("body: ", req.body);
+
+  try {
+    const values = [
+      schoolName,
+      schoolCategory,
+      schoolSemisCode,
+      studyingInClass,
+      enrollmentYear,
+      schoolGRNo,
+      headmasterName,
+      headmasterContact,
+      userId,
+    ];
 
     const insertProjectQuery = `UPDATE applicants_info SET 
     schoolName = ?, schoolCategory = ?, schoolSemisCode = ?, studyingInClass = ?, enrollmentYear = ?,
@@ -140,13 +181,11 @@ exports.addApplicantSchoolInfo = async function (req, res) {
 };
 
 exports.addApplicantTestPreference = async function (req, res) {
-
   const { userId } = req.user;
-  const {testMedium, division, acknowledgment} = req.body;
-  console.log("body: ", req.body)
-  
-  try {
+  const { testMedium, division, acknowledgment } = req.body;
+  console.log("body: ", req.body);
 
+  try {
     const values = [testMedium, division, acknowledgment, userId];
 
     const insertProjectQuery = `UPDATE applicants_info SET 
@@ -262,10 +301,9 @@ exports.getApplicantAddressInfo = async (req, res) => {
 exports.getApplicantSchoolInfo = async (req, res) => {
   const { userId } = req.user;
   try {
-
     const getQuery = `SELECT schoolName, schoolCategory, schoolSemisCode, studyingInClass, enrollmentYear,
     schoolGRNo, headmasterName, headmasterContact FROM applicants_info WHERE id = ?`;
-    
+
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
@@ -293,9 +331,8 @@ exports.getApplicantSchoolInfo = async (req, res) => {
 exports.getApplicantTestPreference = async (req, res) => {
   const { userId } = req.user;
   try {
-
     const getQuery = `SELECT testMedium, division, acknowledgment FROM applicants_info WHERE id = ?`;
-    
+
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
