@@ -9,10 +9,10 @@ const s3Upload = require('../middleware/s3Upload');
 router.post("/signIn", userController.signIn);
 router.get("/verify", verifyToken, userController.verify);
 router.post('/logout', verifyToken, userController.logout)
+router.post("/signUp", userController.signUp);
 
 
 
-// router.post("/signUp", userController.signUp);
 
 // router.post("/passwordReset", userController.passwordReset);
 // router.post("/sendOtp", userController.sendOtp);

@@ -7,33 +7,44 @@ require("dotenv").config();
 
 // ###################### user Create #######################################
 exports.signUp = async function (req, res) {
-  const { name, email, password } = req.body;
-  const currentDate = new Date();
+  const { phoneNumber } = req.body;
   try {
-    const selectResult = await queryRunner(selectQuery("users", "email"), [
-      email,
-    ]);
+    const query = `SELECT phoneNumber FROM applicants where phoneNumber = ?`;
+    const selectResult = await queryRunner(query, [phoneNumber]);
 
     if (selectResult[0].length > 0) {
       return res.status(404).json({
         statusCode: 200,
-        message: `User already exists on this email`,
+        message: `User already exists on this phoneNumber`,
       });
     }
-    const hashPassword = await bcrypt.hash(password, 10);
-    const insertQuery = `INSERT INTO users( name, email, password) VALUES (?,?,?) `;
-    const insertResult = await queryRunner(insertQuery, [
-      name,
-      email,
-      hashPassword,
-      // currentDate,
-    ]);
+
+    const insertQuery = `INSERT INTO applicants(phoneNumber) VALUES (?) `;
+    const insertResult = await queryRunner(insertQuery, [phoneNumber]);
 
     if (insertResult[0].affectedRows > 0) {
-      return res.status(200).json({
-        message: "User added successfully",
-        id: insertResult[0].insertid,
-      });
+      const applicantID = `SESSP` + insertResult[0].insertId;
+      const insertID = insertResult[0].insertId;
+
+      const hashApplicationID = await bcrypt.hash(applicantID, 10);
+
+      const updateQuery = `UPDATE applicants SET applicationID = ? WHERE id = ?`;
+      const updateResult = await queryRunner(updateQuery, [
+        hashApplicationID,
+        insertID,
+      ]);
+
+      if (updateResult[0].affectedRows > 0) {
+        return res.status(200).json({
+          message: "User added successfully",
+          applicantID: applicantID,
+        });
+      } else {
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Failed to add user",
+        });
+      }
     } else {
       return res.status(200).json({
         statusCode: 200,
@@ -51,54 +62,49 @@ exports.signUp = async function (req, res) {
 
 // // ###################### SignIn user start #######################################
 exports.signIn = async function (req, res) {
-
-  const { email, password } = req.body;
+  const { phoneNumber, applicationID } = req.body;
   try {
-
-    const query = ` SELECT id, name, email, password, role FROM users where email = ? `;
-    const findUser = await queryRunner(query, [email]);
+    const query = ` SELECT id, phoneNumber, applicationID FROM applicants where phoneNumber = ? `;
+    const findUser = await queryRunner(query, [phoneNumber]);
 
     if (findUser[0].length === 0) {
-      return res.status(404).json({ message: "Invalid email or password" });
+      return res.status(404).json({ message: "User does not exist on this phone number" });
     }
 
     // Checking hash password
-    const checkPass = await bcrypt.compare(password, findUser[0][0].password);
+    const checkPass = await bcrypt.compare(applicationID, findUser[0][0].applicationID);
     if (!checkPass) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid Phone Number or application ID" });
     }
 
     // Generate Token
     const token = jwt.sign(
-      { userId: findUser[0][0]?.id, email: findUser[0][0]?.email },
+      { userId: findUser[0][0]?.id, phoneNumber: findUser[0][0]?.phoneNumber},
       process.env.JWT_SECRET,
       {
-        expiresIn: "7d",
-      }
+        expiresIn: "2d",
+      },
     );
 
     // Set cookie
-    res.cookie('token', token, {
+    res.cookie("token", token, {
       httpOnly: true,
       // secure: process.env.NODE_ENV === 'production',
       secure: true,
-      sameSite: 'strict',
+      sameSite: "strict",
       maxAge: 1 * 24 * 60 * 60 * 1000,
     });
 
     // Send response
     res.status(200).json({
-      // token: token,
       message: "LogIn successfull",
       data: {
         id: findUser[0][0].id,
-        name: findUser[0][0].name,
-        email: findUser[0][0].email,
-        role: findUser[0][0].role,
+        phoneNumber: findUser[0][0].phoneNumber,
+        token: token
       },
     });
   } catch (error) {
-
     console.log("error", error);
     return res.status(500).json({
       statusCode: 500,
@@ -109,11 +115,11 @@ exports.signIn = async function (req, res) {
 };
 
 exports.logout = async function (req, res) {
-  res.cookie('token', '', {
+  res.cookie("token", "", {
     httpOnly: true,
-    expires: new Date(0)
+    expires: new Date(0),
   });
-  res.json({ message: 'Logged out successfully' });
+  res.json({ message: "Logged out successfully" });
 };
 
 exports.me = async function (req, res) {
@@ -121,23 +127,22 @@ exports.me = async function (req, res) {
     user: {
       id: req.user.id,
       name: req.user.name,
-      email: req.user.email
-    }
+      email: req.user.email,
+    },
   });
 };
 
 exports.verify = async function (req, res) {
- res.json({ 
+  res.json({
     authenticated: true,
     user: {
       id: req.user.id,
       name: req.user.name,
       email: req.user.email,
-      role: req.user.role
-    }
+      role: req.user.role,
+    },
   });
 };
-
 
 // ###################### SignIn user End #######################################
 
@@ -186,7 +191,7 @@ exports.sendOtp = async function (req, res) {
         sendEmail(
           findUser[0][0]?.email,
           "password reset",
-          `your otp code is ${pin}`
+          `your otp code is ${pin}`,
         );
         return res.status(200).json({ message: "Email send successfully." });
       } else {
@@ -279,7 +284,7 @@ exports.addFreelancerDetails = async function (req, res) {
       for (const file of req.files) {
         const insertFileResult = await queryRunner(
           "INSERT INTO location_files (scouted_location, fileUrl, fileKey) VALUES (?, ?, ?)",
-          [scoutId, file.location, file.key]
+          [scoutId, file.location, file.key],
         );
         if (insertFileResult.affectedRows <= 0) {
           return res.status(500).json({
@@ -308,5 +313,3 @@ exports.check = async function (req, res) {
     return res.status(500).json({ message: "Internal Server Error " });
   }
 };
-
-
