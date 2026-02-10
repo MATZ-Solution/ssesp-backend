@@ -4,7 +4,7 @@ const { getTotalPage } = require("../helper/getTotalPage");
 exports.addApplicantInfo = async function (req, res) {
   const { studentName, gender, studentBForm, dob, religion } = req.body;
   const { userId } = req.user;
-  const file = req.files;
+  const file = req.files[0];
 
   console.log("file: ", file);
   try {
@@ -18,7 +18,7 @@ exports.addApplicantInfo = async function (req, res) {
       file.location,
       file.key,
     ];
-    const insertProjectQuery = `INSERT INTO applicants_info(applicantID, studentName, gender, studentBForm, dob, religion, fileUrl, fileKey) VALUES (?,?,?,?,?,?) `;
+    const insertProjectQuery = `INSERT INTO applicants_info(applicantID, studentName, gender, studentBForm, dob, religion, fileUrl, fileKey) VALUES (?,?,?,?,?,?,?,?) `;
 
     const insertFileResult = await queryRunner(insertProjectQuery, values);
 
