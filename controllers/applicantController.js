@@ -143,6 +143,7 @@ exports.addApplicantTestPreference = async function (req, res) {
 
   const { userId } = req.user;
   const {testMedium, division, acknowledgment} = req.body;
+  console.log("body: ", req.body)
   
   try {
 

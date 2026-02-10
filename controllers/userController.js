@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const { selectQuery, insertScoutUserQuery } = require("../constants/queries");
 const { queryRunner } = require("../helper/queryRunner");
 const { sendEmail } = require("../helper/emailService");
+const { sendSMS } = require("../helper/smsService");
+
 require("dotenv").config();
 
 // ###################### user Create #######################################
@@ -35,6 +37,10 @@ exports.signUp = async function (req, res) {
       ]);
 
       if (updateResult[0].affectedRows > 0) {
+        // await sendSMS(
+        //   user.phoneNumber,
+        //   `Welcome back ${user.name}! You logged in at ${new Date().toLocaleString()}`,
+        // );
         return res.status(200).json({
           message: "User added successfully",
           applicantID: applicantID,
@@ -68,18 +74,25 @@ exports.signIn = async function (req, res) {
     const findUser = await queryRunner(query, [phoneNumber]);
 
     if (findUser[0].length === 0) {
-      return res.status(404).json({ message: "User does not exist on this phone number" });
+      return res
+        .status(404)
+        .json({ message: "User does not exist on this phone number" });
     }
 
     // Checking hash password
-    const checkPass = await bcrypt.compare(applicationID, findUser[0][0].applicationID);
+    const checkPass = await bcrypt.compare(
+      applicationID,
+      findUser[0][0].applicationID,
+    );
     if (!checkPass) {
-      return res.status(401).json({ message: "Invalid Phone Number or application ID" });
+      return res
+        .status(401)
+        .json({ message: "Invalid Phone Number or application ID" });
     }
 
     // Generate Token
     const token = jwt.sign(
-      { userId: findUser[0][0]?.id, phoneNumber: findUser[0][0]?.phoneNumber},
+      { userId: findUser[0][0]?.id, phoneNumber: findUser[0][0]?.phoneNumber },
       process.env.JWT_SECRET,
       {
         expiresIn: "2d",
@@ -101,7 +114,7 @@ exports.signIn = async function (req, res) {
       data: {
         id: findUser[0][0].id,
         phoneNumber: findUser[0][0].phoneNumber,
-        token: token
+        token: token,
       },
     });
   } catch (error) {

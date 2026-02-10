@@ -38,6 +38,7 @@
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "twilio": "^5.12.1",
     "utf8": "^3.0.0"
   },
   "name": "ssesp_backend",
