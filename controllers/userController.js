@@ -17,7 +17,7 @@ exports.signUp = async function (req, res) {
     if (selectResult[0].length > 0) {
       return res.status(404).json({
         statusCode: 200,
-        message: `User already exists on this phoneNumber`,
+        message: `User already exists on this phone number`,
       });
     }
 
@@ -70,7 +70,14 @@ exports.signUp = async function (req, res) {
 exports.signIn = async function (req, res) {
   const { phoneNumber, applicationID } = req.body;
   try {
-    const query = ` SELECT id, phoneNumber, applicationID FROM applicants where phoneNumber = ? `;
+    // const query = ` 
+    // SELECT id, phoneNumber, applicationID 
+    // FROM applicants 
+    // where phoneNumber = ? `;
+    const query = ` 
+    SELECT a.id as userID, a.phoneNumber, a.applicationID, ai.id, ai.status
+    FROM applicants a LEFT JOIN applicants_info ai ON a.id = ai.applicantID
+    where a.phoneNumber = ? `;
     const findUser = await queryRunner(query, [phoneNumber]);
 
     if (findUser[0].length === 0) {
@@ -92,7 +99,7 @@ exports.signIn = async function (req, res) {
 
     // Generate Token
     const token = jwt.sign(
-      { userId: findUser[0][0]?.id, phoneNumber: findUser[0][0]?.phoneNumber },
+      { userId: findUser[0][0]?.userID, phoneNumber: findUser[0][0]?.phoneNumber },
       process.env.JWT_SECRET,
       {
         expiresIn: "2d",
@@ -112,9 +119,10 @@ exports.signIn = async function (req, res) {
     res.status(200).json({
       message: "LogIn successfull",
       data: {
-        id: findUser[0][0].id,
+        id: findUser[0][0].userID,
         phoneNumber: findUser[0][0].phoneNumber,
         token: token,
+        formStatus: findUser[0][0].status
       },
     });
   } catch (error) {
