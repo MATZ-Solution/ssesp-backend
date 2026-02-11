@@ -6,7 +6,7 @@ const cookieParser = require("cookie-parser");
 const contactRoutes = require('./routes/contactRoutes')
 const userRoutes = require('./routes/userRoutes')
 const projectRoutes = require('./routes/projectRoutes')
-const formRoutes = require('./routes/formRoutes')
+const applicantRoutes = require('./routes/applicantRoutes')
 
 const rateLimiter = require("./middleware/rateLimiter");
 const adminRoutes = require('./routes/adminRoutes');
@@ -28,7 +28,6 @@ app.use(rateLimiter(15 * 60 * 1000, 100)); // 100 requests / 15 min per IP
 app.use(bodyParser.json());
 app.use(cookieParser());  
 
-
 app.use((req, res, next) => {
   res.header("Cache-Control", "no-cache, no-store, must-revalidate");
   res.header("Pragma", "no-cache");
@@ -46,7 +45,8 @@ app.get("/", (req, res) => {
 getConnectionFromPool();
 
 // Use routes after middlewares
-app.use("/api/form", formRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/applicant", applicantRoutes);
 
 // app.use("/api/contact", contactRoutes);
 // app.use('/api/admin', adminRoutes);
