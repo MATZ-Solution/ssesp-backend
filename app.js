@@ -15,13 +15,15 @@ require("dotenv").config();
 
 const app = express();
 
-app.use(cors({
-  origin: [
-    "https://ssesp.matzsolutions.com/",
-    "https://www.ssesp.matzsolutions.com/",
-    "http://localhost:5173"
-  ], credentials: true,
-}));
+// app.use(cors({
+//   origin: [
+//     "https://ssesp.matzsolutions.com/",
+//     "https://www.ssesp.matzsolutions.com/",
+//     "http://localhost:5173"
+//   ], credentials: true,
+// }));
+
+app.use(cors());
 
 app.use(helmet());
 app.use(rateLimiter(15 * 60 * 1000, 100)); // 100 requests / 15 min per IP

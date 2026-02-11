@@ -18,8 +18,6 @@ const verifyToken = async (req, res, next) => {
     const query = `SELECT id, phoneNumber FROM applicants WHERE id = ?`;
     const result = await queryRunner(query, [decoded.userId]);
     
-    console.log("result: ", result)
-
     if (!result[0] || result[0].length === 0) {
       return res.status(401).json({ message: "User not found" });
     }
