@@ -15,7 +15,7 @@ exports.addApplicantInfo = async function (req, res) {
       religion,
       file.location,
       file.key,
-      'guardian-info/2'
+      'guardian-info-2'
     ];
     const insertProjectQuery = `INSERT INTO applicants_info(applicantID, studentName, gender, studentBForm, dob, religion, fileUrl, fileKey, status) VALUES (?,?,?,?,?,?,?,?,?) `;
 
@@ -62,7 +62,7 @@ exports.addApplicantGuardianInfo = async function (req, res) {
       guardianContact,
       contact1,
       contact2,
-      "address/3",
+      "address-3",
       userId,
     ];
     const insertProjectQuery = `UPDATE applicants_info SET fatherName = ?, fatherCNIC = ?, domicileDistrict = ?, guardianName= ?,
@@ -95,7 +95,7 @@ exports.addApplicantAddressInfo = async function (req, res) {
   const { postalAddress, district, city } = req.body;
 
   try {
-    const values = [postalAddress, district, city, "school-info/4", userId];
+    const values = [postalAddress, district, city, "school-info-4", userId];
     const insertProjectQuery = `UPDATE applicants_info SET postalAddress = ?, district = ?, city = ?, 
     status = ? WHERE applicantID = ? `;
 
@@ -144,7 +144,7 @@ exports.addApplicantSchoolInfo = async function (req, res) {
       schoolGRNo,
       headmasterName,
       headmasterContact,
-      "test-preference/5",
+      "test-preference-5",
       userId,
     ];
 
