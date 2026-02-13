@@ -12,20 +12,20 @@ require("dotenv").config();
 
 // ###################### user Create #######################################
 exports.signUp = async function (req, res) {
-  const { email } = req.body;
+  const { phoneNumber } = req.body;
   try {
-    const query = `SELECT email FROM applicants where email = ?`;
-    const selectResult = await queryRunner(query, [email]);
+    const query = `SELECT phoneNumber FROM applicants where phoneNumber = ?`;
+    const selectResult = await queryRunner(query, [phoneNumber]);
 
     if (selectResult[0].length > 0) {
       return res.status(404).json({
         statusCode: 200,
-        message: `User already exists on this email`,
+        message: `User already exists on this phone number`,
       });
     }
 
-    const insertQuery = `INSERT INTO applicants(email) VALUES (?) `;
-    const insertResult = await queryRunner(insertQuery, [email]);
+    const insertQuery = `INSERT INTO applicants(phoneNumber) VALUES (?) `;
+    const insertResult = await queryRunner(insertQuery, [phoneNumber]);
 
     if (insertResult[0].affectedRows > 0) {
       const applicantID = `SESSP` + insertResult[0].insertId;
@@ -40,15 +40,10 @@ exports.signUp = async function (req, res) {
       ]);
 
       if (updateResult[0].affectedRows > 0) {
-
-        const emailTemplate = applicationIDTemplate(applicantID);
-
-        sendEmail(
-          selectResult[0][0]?.email,
-          "Application ID",
-          emailTemplate,
-        );
-
+        // await sendSMS(
+        //   user.phoneNumber,
+        //   `Welcome back ${user.name}! You logged in at ${new Date().toLocaleString()}`,
+        // );
         return res.status(200).json({
           message: "User added successfully",
           applicantID: applicantID,
@@ -66,8 +61,8 @@ exports.signUp = async function (req, res) {
       });
     }
   } catch (error) {
-    console.log("error: ", error);
     return res.status(500).json({
+      message: "Failed to add user",
       message: error.message,
     });
   }
@@ -76,22 +71,22 @@ exports.signUp = async function (req, res) {
 
 // // ###################### SignIn user start #######################################
 exports.signIn = async function (req, res) {
-  const { email, applicationID } = req.body;
+  const { phoneNumber, applicationID } = req.body;
   try {
-    // const query = `
-    // SELECT id, phoneNumber, applicationID
-    // FROM applicants
+    // const query = ` 
+    // SELECT id, phoneNumber, applicationID 
+    // FROM applicants 
     // where phoneNumber = ? `;
     const query = ` 
-    SELECT a.id as userID, a.email, a.applicationID, ai.id, ai.status
+    SELECT a.id as userID, a.phoneNumber, a.applicationID, ai.id, ai.status
     FROM applicants a LEFT JOIN applicants_info ai ON a.id = ai.applicantID
-    where a.email = ? `;
-    const findUser = await queryRunner(query, [email]);
+    where a.phoneNumber = ? `;
+    const findUser = await queryRunner(query, [phoneNumber]);
 
     if (findUser[0].length === 0) {
       return res
         .status(404)
-        .json({ message: "User does not exist on this email" });
+        .json({ message: "User does not exist on this phone number" });
     }
 
     // Checking hash password
@@ -102,15 +97,12 @@ exports.signIn = async function (req, res) {
     if (!checkPass) {
       return res
         .status(401)
-        .json({ message: "Invalid Email or Application ID" });
+        .json({ message: "Invalid Phone Number or application ID" });
     }
 
     // Generate Token
     const token = jwt.sign(
-      {
-        userId: findUser[0][0]?.userID,
-        email: findUser[0][0]?.email,
-      },
+      { userId: findUser[0][0]?.userID, phoneNumber: findUser[0][0]?.phoneNumber },
       process.env.JWT_SECRET,
       {
         expiresIn: "2d",
@@ -131,9 +123,9 @@ exports.signIn = async function (req, res) {
       message: "LogIn successfull",
       data: {
         id: findUser[0][0].userID,
-        email: findUser[0][0].email,
+        phoneNumber: findUser[0][0].phoneNumber,
         token: token,
-        formStatus: findUser[0][0].status,
+        formStatus: findUser[0][0].status
       },
     });
   } catch (error) {
