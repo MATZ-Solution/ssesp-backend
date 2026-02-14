@@ -45,29 +45,31 @@ exports.addApplicantInfo = async function (req, res) {
 exports.addApplicantGuardianInfo = async function (req, res) {
   const { userId } = req.user;
   const {
-    fatherName,
-    fatherCNIC,
-    domicileDistrict,
     guardianName,
-    guardianContact,
-    contact1,
-    contact2,
+    guardianCNIC,
+    guardianDomicileDistrict,
+    guardianProfession,
+    guardianannualIncome,
+    relation,
+    guardianContactNumber,
+    guardianContactWhattsappNumber
   } = req.body;
 
   try {
     const values = [
-      fatherName,
-      fatherCNIC,
-      domicileDistrict,
       guardianName,
-      guardianContact,
-      contact1,
-      contact2,
+      guardianCNIC,
+      guardianDomicileDistrict,
+      guardianProfession,
+      guardianannualIncome,
+      relation,
+      guardianContactNumber,
+      guardianContactWhattsappNumber,
       "address-3",
       userId,
     ];
-    const insertProjectQuery = `UPDATE applicants_info SET fatherName = ?, fatherCNIC = ?, domicileDistrict = ?, guardianName= ?,
-     guardianContact= ?, contact1= ?, contact2= ?, status = ? WHERE applicantID = ? `;
+    const insertProjectQuery = `UPDATE applicants_info SET guardianName = ?, guardianCNIC = ?, guardianDomicileDistrict = ?,
+      guardianProfession=?, guardianannualIncome= ?, relation= ?, guardianContactNumber= ?, guardianContactWhattsappNumber= ?, status = ? WHERE applicantID = ? `;
 
     const insertFileResult = await queryRunner(insertProjectQuery, values);
 
@@ -212,39 +214,6 @@ exports.addApplicantSchoolInfo = async function (req, res) {
   }
 };
 
-exports.addApplicantTestPreference = async function (req, res) {
-  const { userId } = req.user;
-  const { testMedium, division, acknowledgment } = req.body;
-
-  try {
-    const values = [testMedium, division, acknowledgment, "completed", userId];
-
-    const insertProjectQuery = `UPDATE applicants_info SET 
-    testMedium = ?, division = ?, acknowledgment = ?, status = ?
-    WHERE applicantID = ? `;
-
-    const insertFileResult = await queryRunner(insertProjectQuery, values);
-
-    if (insertFileResult[0].affectedRows > 0) {
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Form submitted successfully.",
-      });
-    } else {
-    }
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Failed to submit form.",
-    });
-  } catch (error) {
-    console.log("Error: ", error);
-    return res.status(500).json({
-      message: "Failed to submit form.",
-      message: error.message,
-    });
-  }
-};
-
 exports.addApplicantDocument = async function (req, res) {
   const { userId } = req.user;
 
@@ -277,10 +246,22 @@ exports.addApplicantDocument = async function (req, res) {
       }
     }
 
-    return res.status(200).json({
-      statusCode: 200,
-      message: "Files uploaded successfully.",
-    });
+    const result = await queryRunner(
+      "UPDATE applicants_info SET status = ? WHERE applicantID = ?",
+      ['school-preference-6', userId]
+    );
+
+    if (result[0].affectedRows > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Files uploaded successfully.",
+      });
+    } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: error.message || "Failed to submit file.",
+      });
+    }
 
   } catch (error) {
     console.log("Error:", error);
@@ -288,6 +269,40 @@ exports.addApplicantDocument = async function (req, res) {
     return res.status(500).json({
       statusCode: 500,
       message: error.message || "Failed to submit file.",
+    });
+  }
+};
+
+exports.addApplicantSchoolPreference = async function (req, res) {
+
+  const { userId } = req.user;
+  const { first_priority_school, second_priority_school, third_priority_school } = req.body;
+
+  try {
+    const values = [first_priority_school, second_priority_school, third_priority_school, "completed", userId];
+
+    const insertProjectQuery = `UPDATE applicants_info SET 
+    first_priority_school = ?, second_priority_school = ?, third_priority_school = ?, status = ?
+    WHERE applicantID = ? `;
+
+    const insertFileResult = await queryRunner(insertProjectQuery, values);
+
+    if (insertFileResult[0].affectedRows > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Form submitted successfully.",
+      });
+    } else {
+    }
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to submit form.",
+    });
+  } catch (error) {
+    console.log("Error: ", error);
+    return res.status(500).json({
+      message: "Failed to submit form.",
+      message: error.message,
     });
   }
 };
@@ -323,7 +338,14 @@ exports.getApplicantInfo = async (req, res) => {
 exports.getApplicantGuardianInfo = async (req, res) => {
   const { userId } = req.user;
   try {
-    const getQuery = `SELECT fatherName, fatherCNIC, domicileDistrict, guardianName, guardianContact, contact1, contact2 FROM applicants_info WHERE applicantID = ?`;
+    const getQuery = `SELECT  guardianName,
+      guardianCNIC,
+      guardianDomicileDistrict,
+      guardianProfession,
+      guardianannualIncome,
+      relation,
+      guardianContactNumber,
+      guardianContactWhattsappNumber FROM applicants_info WHERE applicantID = ?`;
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
@@ -406,23 +428,24 @@ exports.getApplicantSchoolInfo = async (req, res) => {
   }
 };
 
-exports.getApplicantTestPreference = async (req, res) => {
+exports.getApplicantSchoolPreference = async (req, res) => {
 
   const { userId } = req.user;
   try {
-    const getQuery = `SELECT domicileDistrict, gender FROM applicants_info WHERE applicantID = ?`;
+    const getQuery = `SELECT guardianDomicileDistrict, gender FROM applicants_info WHERE applicantID = ?`;
 
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
 
       const district = divisionData
-        ?.flatMap(division => division.districts)
-        ?.find(district => district.district === selectResult?.[0][0]?.domicileDistrict);
+        ?.find(district => district.district === selectResult?.[0][0]?.guardianDomicileDistrict);
 
       const school = district?.schools?.filter(
         item => item.gender === selectResult[0][0]?.gender
       );
+
+      console.log("district: ", district)
 
       res.status(200).json({
         statusCode: 200,

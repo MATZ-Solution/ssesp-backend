@@ -15,7 +15,7 @@ const verifyToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const query = `SELECT id, phoneNumber FROM applicants WHERE id = ?`;
+    const query = `SELECT id, email FROM applicants WHERE id = ?`;
     const result = await queryRunner(query, [decoded.userId]);
     
     if (!result[0] || result[0].length === 0) {
