@@ -1,5 +1,6 @@
 const { queryRunner } = require("../helper/queryRunner");
 const { getTotalPage } = require("../helper/getTotalPage");
+const divisionData = require("../data/schools_grouped_by_division_updated_gender")
 
 exports.addApplicantInfo = async function (req, res) {
   const { studentName, gender, studentBForm, dob, religion } = req.body;
@@ -145,11 +146,10 @@ exports.addApplicantSchoolInfo = async function (req, res) {
       enrollmentYear,
       schoolGRNo,
       headmasterName,
-      headmasterContact,
-      "test-preference-5",
+      // headmasterContact,
+      "document-upload-5",
       userId,
     ];
-
     const updateQuery = `
       UPDATE applicants_info SET 
       schoolName = ?, 
@@ -159,7 +159,6 @@ exports.addApplicantSchoolInfo = async function (req, res) {
       enrollmentYear = ?, 
       schoolGRNo = ?, 
       headmasterName = ?, 
-      headmasterContact = ?, 
       status = ?
       WHERE applicantID = ?
     `;
@@ -173,30 +172,30 @@ exports.addApplicantSchoolInfo = async function (req, res) {
       });
     }
 
-    // if (Array.isArray(previous_school) && previous_school.length > 0) {
-    //   for (const school of previous_school) {
-    //     const insertResult = await queryRunner(
-    //       `INSERT INTO applicant_school 
-    //       (schoolName, class, school_category, semis_code, district, applicantID) 
-    //       VALUES (?, ?, ?, ?, ?, ?)`,
-    //       [
-    //         school.schoolName,
-    //         school.class,
-    //         school.school_category,
-    //         school.semis_code,
-    //         school.district,
-    //         userId,
-    //       ]
-    //     );
+    if (Array.isArray(previous_school) && previous_school.length > 0) {
+      for (const school of previous_school) {
+        const insertResult = await queryRunner(
+          `INSERT INTO applicant_school 
+          (class, schoolCategory, semisCode, district, yearOfPassing, applicantID) 
+          VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            school.class,
+            school.schoolCategory,
+            school.semisCode,
+            school.district,
+            school.yearOfPassing,
+            userId,
+          ]
+        );
 
-    //     if (insertResult[0].affectedRows <= 0) {
-    //       return res.status(500).json({
-    //         statusCode: 500,
-    //         message: "Failed to insert previous school.",
-    //       });
-    //     }
-    //   }
-    // }
+        if (insertResult[0].affectedRows <= 0) {
+          return res.status(500).json({
+            statusCode: 500,
+            message: "Failed to insert previous school.",
+          });
+        }
+      }
+    }
 
     return res.status(200).json({
       statusCode: 200,
@@ -212,7 +211,6 @@ exports.addApplicantSchoolInfo = async function (req, res) {
     });
   }
 };
-
 
 exports.addApplicantTestPreference = async function (req, res) {
   const { userId } = req.user;
@@ -248,34 +246,48 @@ exports.addApplicantTestPreference = async function (req, res) {
 };
 
 exports.addApplicantDocument = async function (req, res) {
-  const { studentName, gender, studentBForm, dob, religion } = req.body;
   const { userId } = req.user;
 
   try {
-    if (req.files.length > 0) {
-      for (const file of req.files) {
-        const insertFileResult = await queryRunner(
-          "INSERT INTO project_files (fileUrl, fileKey, projectID) VALUES (?, ?, ?)",
-          [file.location, file.key, projectID],
-        );
-        if (insertFileResult.affectedRows <= 0) {
-          return res.status(500).json({
-            statusCode: 500,
-            message: "Failed to add files",
-          });
-        }
-      }
-    } else {
-      return res.status(500).json({
-        statusCode: 500,
-        message: "Failed to submit form.",
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "No files uploaded.",
       });
     }
+
+    if (req.files.length > 4) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Too many files. Maximum 4 files allowed.",
+      });
+    }
+
+    for (const file of req.files) {
+      const result = await queryRunner(
+        "INSERT INTO applicant_document (applicantID, documentName, fileUrl, fileKey) VALUES (?, ?, ?, ?)",
+        [userId, file.fieldname, file.location, file.key]
+      );
+
+      if (result[0].affectedRows <= 0) {
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to save file.",
+        });
+      }
+    }
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Files uploaded successfully.",
+    });
+
   } catch (error) {
-    console.log("Error: ", error);
+    console.log("Error:", error);
+
     return res.status(500).json({
-      message: "Failed to submit form.",
-      message: error.message,
+      statusCode: 500,
+      message: error.message || "Failed to submit file.",
     });
   }
 };
@@ -395,6 +407,7 @@ exports.getApplicantSchoolInfo = async (req, res) => {
 };
 
 exports.getApplicantTestPreference = async (req, res) => {
+
   const { userId } = req.user;
   try {
     const getQuery = `SELECT domicileDistrict, gender FROM applicants_info WHERE applicantID = ?`;
@@ -402,11 +415,21 @@ exports.getApplicantTestPreference = async (req, res) => {
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
+
+      const district = divisionData
+        ?.flatMap(division => division.districts)
+        ?.find(district => district.district === selectResult?.[0][0]?.domicileDistrict);
+
+      const school = district?.schools?.filter(
+        item => item.gender === selectResult[0][0]?.gender
+      );
+
       res.status(200).json({
         statusCode: 200,
         message: "Success",
-        data: selectResult[0],
+        data: school || [],
       });
+
     } else {
       res.status(200).json({
         data: [],
