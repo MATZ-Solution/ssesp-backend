@@ -17,7 +17,7 @@ const sendEmail = async (recipientEmail, subject, htmlContent) => {
     });
 
     const mailOptions = {
-      from: 'iccdtalentgate@gmail.com',
+      from: 'ssesp.sef@gmail.com',
       to: recipientEmail,
       subject,
       html: htmlContent,
