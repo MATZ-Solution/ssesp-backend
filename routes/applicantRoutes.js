@@ -18,4 +18,7 @@ router.get("/getApplicantAddressInfo" , verifyToken, applicantController.getAppl
 router.get("/getApplicantSchoolInfo" , verifyToken, applicantController.getApplicantSchoolInfo);
 router.get("/getApplicantSchoolPreference" , verifyToken, applicantController.getApplicantSchoolPreference);
 
+router.get("/getApplicantPDFinfo" , verifyToken, applicantController.getApplicantPDFinfo);
+
+
 module.exports = router;

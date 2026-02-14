@@ -1,6 +1,7 @@
 const { queryRunner } = require("../helper/queryRunner");
 const { getTotalPage } = require("../helper/getTotalPage");
-const divisionData = require("../data/schools_grouped_by_division_updated_gender")
+const divisionData = require("../data/schools_grouped_by_division_updated_gender");
+const { appendFile } = require("fs");
 
 exports.addApplicantInfo = async function (req, res) {
   const { studentName, gender, studentBForm, dob, religion } = req.body;
@@ -18,20 +19,47 @@ exports.addApplicantInfo = async function (req, res) {
       file.key,
       "guardian-info-2",
     ];
-    const insertProjectQuery = `INSERT INTO applicants_info(applicantID, studentName, gender, studentBForm, dob, religion, fileUrl, fileKey, status) VALUES (?,?,?,?,?,?,?,?,?) `;
 
-    const insertFileResult = await queryRunner(insertProjectQuery, values);
+    const insertProjectQuery = `SELECT applicantID FROM applicants_info WHERE applicantID = ? `;
+    const insertFileResult = await queryRunner(insertProjectQuery, [userId]);
 
-    if (insertFileResult[0].affectedRows > 0) {
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Form submitted successfully.",
-      });
+    if (insertFileResult[0]?.length === 0) {
+
+      const insertProjectQuery = `INSERT INTO applicants_info(applicantID, studentName, gender, studentBForm, dob, religion, fileUrl, fileKey, status) VALUES (?,?,?,?,?,?,?,?,?) `;
+      const insertFileResult = await queryRunner(insertProjectQuery, values);
+      
+      if (insertFileResult[0].affectedRows > 0) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Form submitted successfully.",
+        });
+      } else {
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to submit form.",
+        });
+      }
+
     } else {
-      return res.status(500).json({
-        statusCode: 500,
-        message: "Failed to submit form.",
-      });
+
+      const insertProjectQuery = `UPDATE applicants_info SET studentName = ?, gender = ?, studentBForm = ?, 
+      dob = ?, religion = ?, fileUrl = ?, fileKey = ?, status = ? WHERE applicantID = ?`;
+
+      const values = [  studentName, gender, studentBForm, dob, religion, file.location, file.key, "guardian-info-2", userId];
+      const insertFileResult = await queryRunner(insertProjectQuery, values);
+      
+      if (insertFileResult[0].affectedRows > 0) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Form submitted successfully.",
+        });
+      } else {
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to submit form.",
+        });
+      }
+      
     }
   } catch (error) {
     console.log("Error: ", error);
@@ -449,6 +477,41 @@ exports.getApplicantSchoolPreference = async (req, res) => {
         statusCode: 200,
         message: "Success",
         data: school || [],
+      });
+
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+exports.getApplicantPDFinfo = async (req, res) => {
+
+  const { userId } = req.user;
+  try {
+    const getQuery = `SELECT studentName, gender, fileUrl, studentBForm, dob, religion,
+    guardianName, guardianCNIC, relation, guardianDomicileDistrict, guardianContactNumber,
+    first_priority_school, second_priority_school, third_priority_school
+    FROM applicants_info WHERE applicantID = ?`;
+
+    const selectResult = await queryRunner(getQuery, [userId]);
+
+    if (selectResult[0].length > 0) {
+
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0] || [],
       });
 
     } else {
