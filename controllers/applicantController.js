@@ -1,5 +1,6 @@
 const { queryRunner } = require("../helper/queryRunner");
 const { getTotalPage } = require("../helper/getTotalPage");
+const divisionData = require("../data/schools_grouped_by_division_updated_gender")
 
 exports.addApplicantInfo = async function (req, res) {
   const { studentName, gender, studentBForm, dob, religion } = req.body;
@@ -15,7 +16,7 @@ exports.addApplicantInfo = async function (req, res) {
       religion,
       file.location,
       file.key,
-      'guardian-info/2'
+      "guardian-info-2",
     ];
     const insertProjectQuery = `INSERT INTO applicants_info(applicantID, studentName, gender, studentBForm, dob, religion, fileUrl, fileKey, status) VALUES (?,?,?,?,?,?,?,?,?) `;
 
@@ -44,29 +45,31 @@ exports.addApplicantInfo = async function (req, res) {
 exports.addApplicantGuardianInfo = async function (req, res) {
   const { userId } = req.user;
   const {
-    fatherName,
-    fatherCNIC,
-    domicileDistrict,
     guardianName,
-    guardianContact,
-    contact1,
-    contact2,
+    guardianCNIC,
+    guardianDomicileDistrict,
+    guardianProfession,
+    guardianannualIncome,
+    relation,
+    guardianContactNumber,
+    guardianContactWhattsappNumber
   } = req.body;
 
   try {
     const values = [
-      fatherName,
-      fatherCNIC,
-      domicileDistrict,
       guardianName,
-      guardianContact,
-      contact1,
-      contact2,
-      "address/3",
+      guardianCNIC,
+      guardianDomicileDistrict,
+      guardianProfession,
+      guardianannualIncome,
+      relation,
+      guardianContactNumber,
+      guardianContactWhattsappNumber,
+      "address-3",
       userId,
     ];
-    const insertProjectQuery = `UPDATE applicants_info SET fatherName = ?, fatherCNIC = ?, domicileDistrict = ?, guardianName= ?,
-     guardianContact= ?, contact1= ?, contact2= ?, status = ? WHERE applicantID = ? `;
+    const insertProjectQuery = `UPDATE applicants_info SET guardianName = ?, guardianCNIC = ?, guardianDomicileDistrict = ?,
+      guardianProfession=?, guardianannualIncome= ?, relation= ?, guardianContactNumber= ?, guardianContactWhattsappNumber= ?, status = ? WHERE applicantID = ? `;
 
     const insertFileResult = await queryRunner(insertProjectQuery, values);
 
@@ -92,11 +95,11 @@ exports.addApplicantGuardianInfo = async function (req, res) {
 
 exports.addApplicantAddressInfo = async function (req, res) {
   const { userId } = req.user;
-  const { postalAddress, district, city } = req.body;
+  const { postalAddress, district, division } = req.body;
 
   try {
-    const values = [postalAddress, district, city, "school-info/4", userId];
-    const insertProjectQuery = `UPDATE applicants_info SET postalAddress = ?, district = ?, city = ?, 
+    const values = [postalAddress, district, division, "school-info-4", userId];
+    const insertProjectQuery = `UPDATE applicants_info SET postalAddress = ?, district = ?, division = ?, 
     status = ? WHERE applicantID = ? `;
 
     const insertFileResult = await queryRunner(insertProjectQuery, values);
@@ -123,6 +126,7 @@ exports.addApplicantAddressInfo = async function (req, res) {
 
 exports.addApplicantSchoolInfo = async function (req, res) {
   const { userId } = req.user;
+
   const {
     schoolName,
     schoolCategory,
@@ -132,6 +136,7 @@ exports.addApplicantSchoolInfo = async function (req, res) {
     schoolGRNo,
     headmasterName,
     headmasterContact,
+    previous_school,
   } = req.body;
 
   try {
@@ -143,47 +148,141 @@ exports.addApplicantSchoolInfo = async function (req, res) {
       enrollmentYear,
       schoolGRNo,
       headmasterName,
-      headmasterContact,
-      "test-preference/5",
+      // headmasterContact,
+      "document-upload-5",
       userId,
     ];
+    const updateQuery = `
+      UPDATE applicants_info SET 
+      schoolName = ?, 
+      schoolCategory = ?, 
+      schoolSemisCode = ?, 
+      studyingInClass = ?, 
+      enrollmentYear = ?, 
+      schoolGRNo = ?, 
+      headmasterName = ?, 
+      status = ?
+      WHERE applicantID = ?
+    `;
 
-    const insertProjectQuery = `UPDATE applicants_info SET 
-    schoolName = ?, schoolCategory = ?, schoolSemisCode = ?, studyingInClass = ?, enrollmentYear = ?,
-    schoolGRNo = ?, headmasterName = ?, headmasterContact = ?, status = ?
-    WHERE applicantID = ? `;
+    const updateResult = await queryRunner(updateQuery, values);
 
-    const insertFileResult = await queryRunner(insertProjectQuery, values);
-
-    if (insertFileResult[0].affectedRows > 0) {
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Form submitted successfully.",
+    if (updateResult[0].affectedRows <= 0) {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to update school info.",
       });
-    } else {
     }
+
+    if (Array.isArray(previous_school) && previous_school.length > 0) {
+      for (const school of previous_school) {
+        const insertResult = await queryRunner(
+          `INSERT INTO applicant_school 
+          (class, schoolCategory, semisCode, district, yearOfPassing, applicantID) 
+          VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            school.class,
+            school.schoolCategory,
+            school.semisCode,
+            school.district,
+            school.yearOfPassing,
+            userId,
+          ]
+        );
+
+        if (insertResult[0].affectedRows <= 0) {
+          return res.status(500).json({
+            statusCode: 500,
+            message: "Failed to insert previous school.",
+          });
+        }
+      }
+    }
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "School information added successfully.",
+    });
+
+  } catch (error) {
+    console.log("Error:", error);
+
     return res.status(500).json({
       statusCode: 500,
-      message: "Failed to submit form.",
-    });
-  } catch (error) {
-    console.log("Error: ", error);
-    return res.status(500).json({
-      message: "Failed to submit form.",
-      message: error.message,
+      message: error.message || "Failed to add school.",
     });
   }
 };
 
-exports.addApplicantTestPreference = async function (req, res) {
+exports.addApplicantDocument = async function (req, res) {
   const { userId } = req.user;
-  const { testMedium, division, acknowledgment } = req.body;
 
   try {
-    const values = [testMedium, division, acknowledgment, 'completed', userId];
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "No files uploaded.",
+      });
+    }
+
+    if (req.files.length > 4) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Too many files. Maximum 4 files allowed.",
+      });
+    }
+
+    for (const file of req.files) {
+      const result = await queryRunner(
+        "INSERT INTO applicant_document (applicantID, documentName, fileUrl, fileKey) VALUES (?, ?, ?, ?)",
+        [userId, file.fieldname, file.location, file.key]
+      );
+
+      if (result[0].affectedRows <= 0) {
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to save file.",
+        });
+      }
+    }
+
+    const result = await queryRunner(
+      "UPDATE applicants_info SET status = ? WHERE applicantID = ?",
+      ['school-preference-6', userId]
+    );
+
+    if (result[0].affectedRows > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Files uploaded successfully.",
+      });
+    } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: error.message || "Failed to submit file.",
+      });
+    }
+
+  } catch (error) {
+    console.log("Error:", error);
+
+    return res.status(500).json({
+      statusCode: 500,
+      message: error.message || "Failed to submit file.",
+    });
+  }
+};
+
+exports.addApplicantSchoolPreference = async function (req, res) {
+
+  const { userId } = req.user;
+  const { first_priority_school, second_priority_school, third_priority_school } = req.body;
+
+  try {
+    const values = [first_priority_school, second_priority_school, third_priority_school, "completed", userId];
 
     const insertProjectQuery = `UPDATE applicants_info SET 
-    testMedium = ?, division = ?, acknowledgment = ?, status = ?
+    first_priority_school = ?, second_priority_school = ?, third_priority_school = ?, status = ?
     WHERE applicantID = ? `;
 
     const insertFileResult = await queryRunner(insertProjectQuery, values);
@@ -211,7 +310,7 @@ exports.addApplicantTestPreference = async function (req, res) {
 exports.getApplicantInfo = async (req, res) => {
   const { userId } = req.user;
   try {
-    const getQuery = `SELECT studentName, gender, studentBForm, dob, religion FROM applicants_info WHERE id = ?`;
+    const getQuery = `SELECT studentName, gender, studentBForm, dob, religion FROM applicants_info WHERE applicantID = ?`;
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
@@ -239,7 +338,14 @@ exports.getApplicantInfo = async (req, res) => {
 exports.getApplicantGuardianInfo = async (req, res) => {
   const { userId } = req.user;
   try {
-    const getQuery = `SELECT fatherName, fatherCNIC, domicileDistrict, guardianName, guardianContact, contact1, contact2 FROM applicants_info WHERE id = ?`;
+    const getQuery = `SELECT  guardianName,
+      guardianCNIC,
+      guardianDomicileDistrict,
+      guardianProfession,
+      guardianannualIncome,
+      relation,
+      guardianContactNumber,
+      guardianContactWhattsappNumber FROM applicants_info WHERE applicantID = ?`;
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
@@ -267,7 +373,7 @@ exports.getApplicantGuardianInfo = async (req, res) => {
 exports.getApplicantAddressInfo = async (req, res) => {
   const { userId } = req.user;
   try {
-    const getQuery = `SELECT postalAddress, district, city FROM applicants_info WHERE id = ?`;
+    const getQuery = `SELECT postalAddress, district, division FROM applicants_info WHERE applicantID = ?`;
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
@@ -296,7 +402,7 @@ exports.getApplicantSchoolInfo = async (req, res) => {
   const { userId } = req.user;
   try {
     const getQuery = `SELECT schoolName, schoolCategory, schoolSemisCode, studyingInClass, enrollmentYear,
-    schoolGRNo, headmasterName, headmasterContact FROM applicants_info WHERE id = ?`;
+    schoolGRNo, headmasterName, headmasterContact FROM applicants_info WHERE applicantID = ?`;
 
     const selectResult = await queryRunner(getQuery, [userId]);
 
@@ -322,19 +428,29 @@ exports.getApplicantSchoolInfo = async (req, res) => {
   }
 };
 
-exports.getApplicantTestPreference = async (req, res) => {
+exports.getApplicantSchoolPreference = async (req, res) => {
+
   const { userId } = req.user;
   try {
-    const getQuery = `SELECT testMedium, division, acknowledgment FROM applicants_info WHERE id = ?`;
+    const getQuery = `SELECT guardianDomicileDistrict, gender FROM applicants_info WHERE applicantID = ?`;
 
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
+
+      const district = divisionData
+        ?.find(district => district.district === selectResult?.[0][0]?.guardianDomicileDistrict);
+
+      const school = district?.schools?.filter(
+        item => item.gender === selectResult[0][0]?.gender
+      );
+
       res.status(200).json({
         statusCode: 200,
         message: "Success",
-        data: selectResult[0],
+        data: school || [],
       });
+
     } else {
       res.status(200).json({
         data: [],

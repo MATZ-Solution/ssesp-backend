@@ -43,14 +43,14 @@ exports.addProject = async function (req, res) {
     const insertFileResult = await queryRunner(insertProjectQuery, values);
 
     const project_id = insertFileResult[0].insertId;
-    let parsedSkills = JSON.parse(skills)
+    let parsedSkills = JSON.parse(skills);
     if (parsedSkills && parsedSkills.length > 0) {
       for (const skill of parsedSkills) {
         const insertProjectQuery = `INSERT INTO project_skills( name, project_id) VALUES (?,?) `;
         const queryParams = [skill, project_id];
         const insertFileResult = await queryRunner(
           insertProjectQuery,
-          queryParams
+          queryParams,
         );
       }
     }
@@ -61,7 +61,7 @@ exports.addProject = async function (req, res) {
         const queryParams = [i, project_id];
         const insertFileResult = await queryRunner(
           insertProjectQuery,
-          queryParams
+          queryParams,
         );
       }
     }
@@ -69,12 +69,12 @@ exports.addProject = async function (req, res) {
     // Add files into database
     if (insertFileResult[0].affectedRows > 0) {
       let projectID = insertFileResult[0].insertId;
-      console.log("req.files.length :", req.files.length)
+      console.log("req.files.length :", req.files.length);
       if (req.files.length > 0) {
         for (const file of req.files) {
           const insertFileResult = await queryRunner(
             "INSERT INTO project_files (fileUrl, fileKey, projectID) VALUES (?, ?, ?)",
-            [file.location, file.key, projectID]
+            [file.location, file.key, projectID],
           );
           if (insertFileResult.affectedRows <= 0) {
             return res.status(500).json({
@@ -146,7 +146,7 @@ exports.getProjectByClient = async (req, res) => {
         message: "Success",
         // data: selectResult[0]
         data: filterData,
-        totalPages
+        totalPages,
       });
     } else {
       res.status(200).json({
@@ -195,7 +195,7 @@ exports.getAllProject = async (req, res) => {
         message: "Success",
         // data: selectResult[0]
         data: filterData,
-        totalPages
+        totalPages,
       });
     } else {
       res.status(200).json({
@@ -291,9 +291,22 @@ exports.getProjectProposalsByClient = async (req, res) => {
 };
 
 exports.applyProject = async function (req, res) {
-  const { portfolioLinks, paymentTerms, currency, proposedBudget, timeUnit, estimatedTime,
-    proposedDeliverables, coverLetter, email, freelancerName,
-    clientId, projectId, freelancerId, milestonePayment } = req.body;
+  const {
+    portfolioLinks,
+    paymentTerms,
+    currency,
+    proposedBudget,
+    timeUnit,
+    estimatedTime,
+    proposedDeliverables,
+    coverLetter,
+    email,
+    freelancerName,
+    clientId,
+    projectId,
+    freelancerId,
+    milestonePayment,
+  } = req.body;
   const files = req.files;
   try {
     // Add project_proposals into database
@@ -311,7 +324,7 @@ exports.applyProject = async function (req, res) {
       proposedBudget,
       currency,
       paymentTerms,
-      portfolioLinks
+      portfolioLinks,
     ];
     const insertFileResult = await queryRunner(insertProposalsQuery, values);
 
@@ -320,10 +333,7 @@ exports.applyProject = async function (req, res) {
       for (const i of milestonePaymentArray) {
         const insertQuery = `INSERT INTO project_proposals_milestone(percentage, duration, freelancer_id) VALUES (?,?,?)`;
         const queryParams = [i.percentage, i.duration, freelancerId];
-        const insertResult = await queryRunner(
-          insertQuery,
-          queryParams
-        );
+        const insertResult = await queryRunner(insertQuery, queryParams);
       }
     }
 
@@ -414,7 +424,7 @@ exports.editProject = async function (req, res) {
       for (const skill of skills) {
         await queryRunner(
           "INSERT INTO project_skills (name, project_id) VALUES (?, ?)",
-          [skill, id]
+          [skill, id],
         );
       }
     }
@@ -426,7 +436,7 @@ exports.editProject = async function (req, res) {
       for (const lang of language) {
         await queryRunner(
           "INSERT INTO project_language (name, project_id) VALUES (?, ?)",
-          [lang, id]
+          [lang, id],
         );
       }
     }
@@ -437,7 +447,7 @@ exports.editProject = async function (req, res) {
       for (const file of req.files) {
         const result = await queryRunner(
           "INSERT INTO projectfiles (fileUrl, fileKey, projectID) VALUES (?, ?, ?)",
-          [file.location, file.key, id]
+          [file.location, file.key, id],
         );
 
         if (result.affectedRows <= 0) {
