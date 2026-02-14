@@ -6,7 +6,7 @@ const cookieParser = require("cookie-parser");
 const contactRoutes = require('./routes/contactRoutes')
 const userRoutes = require('./routes/userRoutes')
 const projectRoutes = require('./routes/projectRoutes')
-const formRoutes = require('./routes/formRoutes')
+const applicantRoutes = require('./routes/applicantRoutes')
 
 const rateLimiter = require("./middleware/rateLimiter");
 const adminRoutes = require('./routes/adminRoutes');
@@ -17,17 +17,17 @@ const app = express();
 
 app.use(cors({
   origin: [
-    "https://ssesp.matzsolutions.com/",
-    "https://www.ssesp.matzsolutions.com/",
+    "https://ssesp.matzsolutions.com",
+    "https://www.ssesp.matzsolutions.com",
     "http://localhost:5173"
   ], credentials: true,
 }));
+
 
 app.use(helmet());
 app.use(rateLimiter(15 * 60 * 1000, 100)); // 100 requests / 15 min per IP
 app.use(bodyParser.json());
 app.use(cookieParser());  
-
 
 app.use((req, res, next) => {
   res.header("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -40,13 +40,14 @@ app.use((req, res, next) => {
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile)); // This comes after app is initialized
 
 app.get("/", (req, res) => {
-  res.send("Welcome SSESP! 07-2-2025 again 5");
+  res.send("Welcome SSESP! 11-02-2025 again 5");
 });
 
 getConnectionFromPool();
 
 // Use routes after middlewares
-app.use("/api/form", formRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/applicant", applicantRoutes);
 
 // app.use("/api/contact", contactRoutes);
 // app.use('/api/admin', adminRoutes);
