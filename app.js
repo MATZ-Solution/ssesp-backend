@@ -40,7 +40,7 @@ app.use((req, res, next) => {
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile)); // This comes after app is initialized
 
 app.get("/", (req, res) => {
-  res.send("Welcome SSESP! 11-02-2025 again 5");
+  res.send("Welcome SSESP! 14-02-2025 again 6");
 });
 
 getConnectionFromPool();
@@ -49,7 +49,7 @@ getConnectionFromPool();
 app.use("/api/user", userRoutes);
 app.use("/api/applicant", applicantRoutes);
 
-// app.use("/api/contact", contactRoutes);
+// app.use("/api/contact", contactRoutess);
 // app.use('/api/admin', adminRoutes);
 // app.use("/auth", userRoutes);
 
