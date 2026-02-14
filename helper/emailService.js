@@ -8,19 +8,16 @@ const sendEmail = async (recipientEmail, subject, htmlContent) => {
     const transporter = nodemailer.createTransport({
       host: process.env.email_host,
       port: Number(process.env.email_port),
-      secure: false,
+      secure: true,
       auth: {
         user: process.env.email_user, // Your Gmail address
         pass: process.env.email_pass, // Your generated app password
-      },
-      tls: {
-        ciphers: "SSLv3",
       },
       debug: true, // Enable debug output
     });
 
     const mailOptions = {
-      from: 'iccdtalentgate@gmail.com',
+      from: 'ssesp.sef@gmail.com',
       to: recipientEmail,
       subject,
       html: htmlContent,

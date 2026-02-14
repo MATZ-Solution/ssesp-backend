@@ -41,7 +41,7 @@ const applicationIDTemplate = (applicationID) => {
     
                   <p style="margin-top:30px;">
                     Regards,<br/>
-                    <strong>Your Organization Name</strong>
+                    <strong>Sindh Education Foundation, Government of Sindh</strong>
                   </p>
                 </td>
               </tr>
