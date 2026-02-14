@@ -445,8 +445,6 @@ exports.getApplicantSchoolPreference = async (req, res) => {
         item => item.gender === selectResult[0][0]?.gender
       );
 
-      console.log("district: ", district)
-
       res.status(200).json({
         statusCode: 200,
         message: "Success",
