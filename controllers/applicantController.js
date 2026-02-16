@@ -113,15 +113,14 @@ exports.addApplicantGuardianInfo = async function (req, res) {
         message: "Form submitted successfully.",
       });
     } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to submit form.",
+      });
     }
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Failed to submit form.",
-    });
   } catch (error) {
     console.log("Error: ", error);
     return res.status(500).json({
-      message: "Failed to submit form.",
       message: error.message,
     });
   }
@@ -144,11 +143,11 @@ exports.addApplicantAddressInfo = async function (req, res) {
         message: "Form submitted successfully.",
       });
     } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to submit form.",
+      });
     }
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Failed to submit form.",
-    });
   } catch (error) {
     console.log("Error: ", error);
     return res.status(500).json({
@@ -340,11 +339,11 @@ exports.addApplicantSchoolPreference = async function (req, res) {
       const updateQuery = `UPDATE applicants_info SET status = ? WHERE applicantID = ?`
       const updateResult = await queryRunner(updateQuery, ['completed', userId]);
       if (updateResult[0].affectedRows <= 0) {
-          return res.status(500).json({
-            statusCode: 500,
-            message: "Failed to update status.",
-          });
-        }
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to update status.",
+        });
+      }
     }
 
     return res.status(200).json({
