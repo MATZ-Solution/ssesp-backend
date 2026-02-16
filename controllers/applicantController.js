@@ -27,7 +27,7 @@ exports.addApplicantInfo = async function (req, res) {
 
       const insertProjectQuery = `INSERT INTO applicants_info(applicantID, studentName, gender, studentBForm, dob, religion, fileUrl, fileKey, status) VALUES (?,?,?,?,?,?,?,?,?) `;
       const insertFileResult = await queryRunner(insertProjectQuery, values);
-      
+
       if (insertFileResult[0].affectedRows > 0) {
         return res.status(200).json({
           statusCode: 200,
@@ -45,9 +45,9 @@ exports.addApplicantInfo = async function (req, res) {
       const insertProjectQuery = `UPDATE applicants_info SET studentName = ?, gender = ?, studentBForm = ?, 
       dob = ?, religion = ?, fileUrl = ?, fileKey = ?, status = ? WHERE applicantID = ?`;
 
-      const values = [  studentName, gender, studentBForm, dob, religion, file.location, file.key, "guardian-info-2", userId];
+      const values = [studentName, gender, studentBForm, dob, religion, file.location, file.key, "guardian-info-2", userId];
       const insertFileResult = await queryRunner(insertProjectQuery, values);
-      
+
       if (insertFileResult[0].affectedRows > 0) {
         return res.status(200).json({
           statusCode: 200,
@@ -59,7 +59,7 @@ exports.addApplicantInfo = async function (req, res) {
           message: "Failed to submit form.",
         });
       }
-      
+
     }
   } catch (error) {
     console.log("Error: ", error);
@@ -500,18 +500,25 @@ exports.getApplicantPDFinfo = async (req, res) => {
   const { userId } = req.user;
   try {
     const getQuery = `SELECT studentName, gender, fileUrl, studentBForm, dob, religion,
-    guardianName, guardianCNIC, relation, guardianDomicileDistrict, guardianContactNumber,
+    guardianName, guardianCNIC, relation, guardianDomicileDistrict, guardianContactNumber, guardianannualIncome, guardianContactWhattsappNumber,
+    postalAddress, division, district, 
+    schoolName, schoolCategory, schoolSemisCode, studyingInClass, enrollmentYear, schoolGRNo,
     first_priority_school, second_priority_school, third_priority_school
     FROM applicants_info WHERE applicantID = ?`;
-
     const selectResult = await queryRunner(getQuery, [userId]);
 
-    if (selectResult[0].length > 0) {
+    const prevSchoolQuery = `SELECT class, schoolCategory, semisCode, district, yearOfPassing
+    FROM applicant_school WHERE applicantID = ? `
+
+    const prevSchoolResult = await queryRunner(prevSchoolQuery, [userId]);
+
+    if (selectResult[0].length > 0 && prevSchoolResult[0].length > 0) {
 
       res.status(200).json({
         statusCode: 200,
         message: "Success",
         data: selectResult[0] || [],
+        previous_school: prevSchoolResult[0] || []
       });
 
     } else {
