@@ -47,6 +47,7 @@ getConnectionFromPool();
 // Use routes after middlewares
 app.use("/api/user", userRoutes);
 app.use("/api/applicant", applicantRoutes);
+app.use('/api/admin', adminRoutes);
 
 // app.use("/api/contact", contactRoutes);
 // app.use('/api/admin', adminRoutes);
