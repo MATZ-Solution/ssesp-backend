@@ -80,7 +80,9 @@ exports.addApplicantGuardianInfo = async function (req, res) {
     guardianannualIncome,
     relation,
     guardianContactNumber,
-    guardianContactWhattsappNumber
+    guardianContactWhattsappNumber,
+    siblings_under_sef,
+    no_siblings_under_sef
   } = req.body;
 
   try {
@@ -93,11 +95,15 @@ exports.addApplicantGuardianInfo = async function (req, res) {
       relation,
       guardianContactNumber,
       guardianContactWhattsappNumber,
+      siblings_under_sef,
+      no_siblings_under_sef,
       "address-3",
       userId,
     ];
     const insertProjectQuery = `UPDATE applicants_info SET guardianName = ?, guardianCNIC = ?, guardianDomicileDistrict = ?,
-      guardianProfession=?, guardianannualIncome= ?, relation= ?, guardianContactNumber= ?, guardianContactWhattsappNumber= ?, status = ? WHERE applicantID = ? `;
+      guardianProfession=?, guardianannualIncome= ?, relation= ?, guardianContactNumber= ?, guardianContactWhattsappNumber= ?, 
+      siblings_under_sef = ?, no_siblings_under_sef = ?,
+      status = ? WHERE applicantID = ? `;
 
     const insertFileResult = await queryRunner(insertProjectQuery, values);
 
@@ -304,33 +310,53 @@ exports.addApplicantDocument = async function (req, res) {
 exports.addApplicantSchoolPreference = async function (req, res) {
 
   const { userId } = req.user;
-  const { first_priority_school, second_priority_school, third_priority_school } = req.body;
+  const { priority } = req.body;
 
   try {
-    const values = [first_priority_school, second_priority_school, third_priority_school, "completed", userId];
 
-    const insertProjectQuery = `UPDATE applicants_info SET 
-    first_priority_school = ?, second_priority_school = ?, third_priority_school = ?, status = ?
-    WHERE applicantID = ? `;
-
-    const insertFileResult = await queryRunner(insertProjectQuery, values);
-
-    if (insertFileResult[0].affectedRows > 0) {
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Form submitted successfully.",
+    if (!priority || !Array.isArray(priority) || priority.length === 0) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Priority must be a non-empty array.",
       });
-    } else {
     }
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Failed to submit form.",
+
+    if (Array.isArray(priority) && priority.length > 0) {
+      for (const school of priority) {
+        const insertResult = await queryRunner(
+          `INSERT INTO applicant_school_priority (schoolName, priority, applicantID) 
+          VALUES (?, ?, ?)`,
+          [school.schoolName, school.priority, userId]
+        );
+
+        if (insertResult[0].affectedRows <= 0) {
+          return res.status(500).json({
+            statusCode: 500,
+            message: "Failed to insert school preference.",
+          });
+        }
+      }
+
+      const updateQuery = `UPDATE applicants_info SET status = ? WHERE applicantID = ?`
+      const updateResult = await queryRunner(updateQuery, ['completed', userId]);
+      if (updateResult[0].affectedRows <= 0) {
+          return res.status(500).json({
+            statusCode: 500,
+            message: "Failed to update status.",
+          });
+        }
+    }
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "School information added successfully.",
     });
+
   } catch (error) {
     console.log("Error: ", error);
     return res.status(500).json({
-      message: "Failed to submit form.",
-      message: error.message,
+      statusCode: 500,
+      message: error.message || "Failed to submit form.",  // Fixed: removed duplicate
     });
   }
 };
@@ -502,8 +528,7 @@ exports.getApplicantPDFinfo = async (req, res) => {
     const getQuery = `SELECT studentName, gender, fileUrl, studentBForm, dob, religion,
     guardianName, guardianCNIC, relation, guardianDomicileDistrict, guardianContactNumber, guardianannualIncome, guardianContactWhattsappNumber,
     postalAddress, division, district, 
-    schoolName, schoolCategory, schoolSemisCode, studyingInClass, enrollmentYear, schoolGRNo,
-    first_priority_school, second_priority_school, third_priority_school
+    schoolName, schoolCategory, schoolSemisCode, studyingInClass, enrollmentYear, schoolGRNo
     FROM applicants_info WHERE applicantID = ?`;
     const selectResult = await queryRunner(getQuery, [userId]);
 
@@ -512,13 +537,17 @@ exports.getApplicantPDFinfo = async (req, res) => {
 
     const prevSchoolResult = await queryRunner(prevSchoolQuery, [userId]);
 
-    if (selectResult[0].length > 0 && prevSchoolResult[0].length > 0) {
+    const prioritySchoolQuery = `SELECT schoolName, priority FROM applicant_school_priority WHERE applicantID = ? `
+    const prioritySchoolResult = await queryRunner(prioritySchoolQuery, [userId]);
+
+    if (selectResult[0].length > 0 && prevSchoolResult[0].length > 0 && prioritySchoolResult[0].length > 0) {
 
       res.status(200).json({
         statusCode: 200,
         message: "Success",
         data: selectResult[0] || [],
-        previous_school: prevSchoolResult[0] || []
+        previous_school: prevSchoolResult[0] || [],
+        priority_school: prioritySchoolResult[0] || []
       });
 
     } else {
