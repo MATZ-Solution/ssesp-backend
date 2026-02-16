@@ -28,7 +28,7 @@ exports.signUp = async function (req, res) {
     const insertResult = await queryRunner(insertQuery, [email]);
 
     if (insertResult[0].affectedRows > 0) {
-      const applicantID = `SESSP` + insertResult[0].insertId;
+      const applicantID = `SSESP` + insertResult[0].insertId;
       const insertID = insertResult[0].insertId;
 
       const hashApplicationID = await bcrypt.hash(applicantID, 10);
