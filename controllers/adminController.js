@@ -45,6 +45,7 @@ exports.getDashbaordData = async (req, res) => {
 };
 
 exports.getDashbaordApplicantData = async (req, res) => {
+  
   // const { userId } = req.user;
   const limit = 10;
   const { status = 'completed', page = 1 } = req.query;
@@ -68,10 +69,15 @@ exports.getDashbaordApplicantData = async (req, res) => {
 
     if (selectResult[0].length > 0) {
 
+      // const countQuery = ` SELECT COUNT(DISTINCT id) AS total ${baseQuery} ${whereClause} `;
+      // const totalPages = await getTotalPage(countQuery, limit, [userId]);
+
       res.status(200).json({
         statusCode: 200,
         message: "Success",
         data: selectResult[0],
+        // totalPages,
+
       });
 
     } else {
