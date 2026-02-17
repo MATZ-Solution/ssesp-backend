@@ -25,7 +25,7 @@ app.use(cors({
 
 
 app.use(helmet());
-app.use(rateLimiter(15 * 60 * 1000, 100)); // 100 requests / 15 min per IP
+// app.use(rateLimiter(15 * 60 * 1000, 100)); // 100 requests / 15 min per IP
 
 app.use(bodyParser.json());
 app.use(cookieParser());  
@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile)); // This comes after app is initialized
 
 app.get("/", (req, res) => {
-  res.send("Welcome SSESP! 17-02-2025 again 6");
+  res.send("Welcome SSESP! 17-02-2025 again 7");
 });
 
 getConnectionFromPool();
