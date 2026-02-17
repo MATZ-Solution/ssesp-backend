@@ -1,4 +1,4 @@
-const { verifyToken } = require("../middleware/authenticate");
+const { verifyTokenAdmin } = require("../middleware/admin-authenticate");
 const s3Upload = require('../middleware/s3Upload');
 const adminController = require("../controllers/adminController");
 const validate = require("../middleware/validate")
@@ -9,10 +9,10 @@ const { addContactSchema } = require("../validators/contact.validator")
 
 const router = express.Router();
 
-router.get("/getDashbaordData", adminController.getDashbaordData);
-router.get("/getDashbaordApplicantData", adminController.getDashbaordApplicantData);
+// router.post("/signUp", adminController.adminSignUp);
+router.post("/signIn", adminController.adminSignIn);
 
-// router.get("/getAllContact", verifyToken, authorizeRoles("admin"), adminController.getAllContact);
-
+router.get("/getDashbaordData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordData);
+router.get("/getDashbaordApplicantData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordApplicantData);
 
 module.exports = router;
