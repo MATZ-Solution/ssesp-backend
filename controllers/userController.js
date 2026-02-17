@@ -143,6 +143,7 @@ exports.signIn = async function (req, res) {
         id: findUser[0][0].userID,
         email: findUser[0][0].email,
         token: token,
+        role: 'applicant',
         formStatus: findUser[0][0].status,
       },
     });
