@@ -12,6 +12,7 @@ require("dotenv").config();
 
 // ###################### user Create #######################################
 exports.signUp = async function (req, res) {
+
   const { email } = req.body;
   try {
     const query = `SELECT email FROM applicants where email = ?`;
@@ -43,11 +44,20 @@ exports.signUp = async function (req, res) {
 
         const emailTemplate = applicationIDTemplate(applicantID);
 
-        await sendEmail(
-          email,
-          "Application ID",
-          emailTemplate,
-        );
+        let emailStatus = await sendEmail(email, "Application ID", emailTemplate);
+
+        console.log("emailStatus: ", emailStatus)
+
+        if (!emailStatus.success) {
+
+          const deleteQuery = `DELETE FROM applicants WHERE id = ?`;
+          const updateResult = await queryRunner(deleteQuery, [insertID]);
+          if (updateResult[0].affectedRows > 0) {
+            return res.status(500).json({
+              message: "Failed To send email.",
+            });
+          }
+        }
 
         return res.status(200).json({
           message: "User added successfully",

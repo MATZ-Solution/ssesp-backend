@@ -26,6 +26,7 @@ app.use(cors({
 
 app.use(helmet());
 app.use(rateLimiter(15 * 60 * 1000, 100)); // 100 requests / 15 min per IP
+
 app.use(bodyParser.json());
 app.use(cookieParser());  
 
@@ -48,6 +49,7 @@ getConnectionFromPool();
 // Use routes after middlewares
 app.use("/api/user", userRoutes);
 app.use("/api/applicant", applicantRoutes);
+app.use('/api/admin', adminRoutes);
 
 // app.use("/api/contact", contactRoutess);
 // app.use('/api/admin', adminRoutes);

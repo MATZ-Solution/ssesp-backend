@@ -9,11 +9,10 @@ const { addContactSchema } = require("../validators/contact.validator")
 
 const router = express.Router();
 
-router.get("/getAllContact", verifyToken, authorizeRoles("admin"), adminController.getAllContact);
-router.get("/getAllInterOrg", verifyToken, authorizeRoles("admin"), adminController.getAllInternationalOrg);
+router.get("/getDashbaordData", adminController.getDashbaordData);
+router.get("/getDashbaordApplicantData", adminController.getDashbaordApplicantData);
 
-router.post("/addContact", validate(addContactSchema), adminController.addContact);
+// router.get("/getAllContact", verifyToken, authorizeRoles("admin"), adminController.getAllContact);
 
-router.put("/editContact/:id", adminController.editContact);
 
 module.exports = router;

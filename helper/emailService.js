@@ -1,32 +1,46 @@
 // emailService.js
 require("dotenv").config();
-
+const { queryRunner } = require("../helper/queryRunner");
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (recipientEmail, subject, htmlContent) => {
   try {
     const transporter = nodemailer.createTransport({
-      host: process.env.email_host,
-      port: Number(process.env.email_port),
-      secure: true,
+      host: process.env.MS_EMAIL_HOST,
+      port: Number(process.env.MS_EMAIL_PORT),
+      secure: false,
       auth: {
-        user: process.env.email_user, // Your Gmail address
-        pass: process.env.email_pass, // Your generated app password
+        user: process.env.MS_EMAIL_USER, // Your Gmail address
+        pass: process.env.MS_EMAIL_PASS, // Your generated app password
       },
-      debug: true, // Enable debug output
+      tls: {
+        ciphers: 'SSLv3',
+        rejectUnauthorized: true
+      }
     });
 
     const mailOptions = {
-      from: 'ssesp.sef@gmail.com',
+      from: process.env.MS_EMAIL_FROM,
       to: recipientEmail,
       subject,
       html: htmlContent,
     };
 
     await transporter.sendMail(mailOptions);
+    return {
+      success: true,
+      message: 'success'
+    };
+
   } catch (err) {
-    console.error('Error sending email:', err);
-    throw new Error('Error sending email');
+
+    console.error('Error sending email:', err.message);
+
+    return {
+      success: false,
+      error: err.code || 'EMAIL_SEND_FAILED',
+      message: err.message || 'Failed to send email'
+    };
   }
 };
 
