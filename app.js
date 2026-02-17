@@ -25,6 +25,7 @@ app.use(cors({
 
 app.use(helmet());
 app.use(rateLimiter(15 * 60 * 1000, 100)); // 100 requests / 15 min per IP
+
 app.use(bodyParser.json());
 app.use(cookieParser());  
 
