@@ -1,6 +1,105 @@
 const { queryRunner } = require("../helper/queryRunner");
 const handleNotifications = require("../utils/sendnotification");
 const { getTotalPage } = require("../helper/getTotalPage");
+const { selectQuery } = require("../constants/queries");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+exports.adminSignUp = async function (req, res) {
+  const { email, password, role } = req.body;
+  try {
+    const selectResult = await queryRunner(selectQuery("user", "email"), [
+      email,
+    ]);
+
+    if (selectResult[0].length > 0) {
+      return res.status(404).json({
+        statusCode: 200,
+        message: `User already exists on this email`,
+      });
+    }
+    const hashPassword = await bcrypt.hash(password, 10);
+    const insertQuery = `INSERT INTO user( email, password, role) VALUES (?,?,?) `;
+    const insertResult = await queryRunner(insertQuery, [
+      email,
+      hashPassword,
+      role
+    ]);
+
+    if (insertResult[0].affectedRows > 0) {
+      return res.status(200).json({
+        message: "User added successfully",
+      });
+    } else {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Failed to add user",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to add user",
+      message: error.message,
+    });
+  }
+};
+
+exports.adminSignIn = async function (req, res) {
+
+  const { email, password } = req.body;
+  try {
+
+    const query = ` SELECT id, email, password, role FROM user where email = ? `;
+    const findUser = await queryRunner(query, [email]);
+
+    if (findUser[0].length === 0) {
+      return res.status(404).json({ message: "Invalid email or password" });
+    }
+
+    // Checking hash password
+    const checkPass = await bcrypt.compare(password, findUser[0][0].password);
+    if (!checkPass) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Generate Token
+    const token = jwt.sign(
+      { userId: findUser[0][0]?.id, email: findUser[0][0]?.email },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      // secure: process.env.NODE_ENV === 'production',
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 1 * 24 * 60 * 60 * 1000,
+    });
+
+    // Send response
+    res.status(200).json({
+      // token: token,
+      message: "LogIn successfull",
+      data: {
+        email: findUser[0][0].email,
+        role: findUser[0][0].role,
+        token: token
+      },
+    });
+  } catch (error) {
+
+    console.log("error", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to SignIn",
+      error: error.message,
+    });
+  }
+};
 
 exports.getDashbaordData = async (req, res) => {
   // const { userId } = req.user;
@@ -45,6 +144,7 @@ exports.getDashbaordData = async (req, res) => {
 };
 
 exports.getDashbaordApplicantData = async (req, res) => {
+  
   // const { userId } = req.user;
   const limit = 10;
   const { status = 'completed', page = 1 } = req.query;
@@ -68,10 +168,15 @@ exports.getDashbaordApplicantData = async (req, res) => {
 
     if (selectResult[0].length > 0) {
 
+      // const countQuery = ` SELECT COUNT(DISTINCT id) AS total ${baseQuery} ${whereClause} `;
+      // const totalPages = await getTotalPage(countQuery, limit, [userId]);
+
       res.status(200).json({
         statusCode: 200,
         message: "Success",
         data: selectResult[0],
+        // totalPages,
+
       });
 
     } else {
@@ -89,5 +194,42 @@ exports.getDashbaordApplicantData = async (req, res) => {
     });
   }
 };
+
+// exports.changePasword = async function (req, res) {
+//   const { password, email } = req.body;
+//   try {
+
+//     const findUserQuery = `SELECT email FROM user WHERE email = ? `;
+//     const findUserResult = await queryRunner(findUserQuery, [email]);
+
+//     if (findUserResult[0].length > 0) {
+//       const hashPassword = await bcrypt.hash(password, 10);
+//       const insertQuery = `UPDATE users SET password = ? WHERE email = ? `;
+//       const insertResult = await queryRunner(insertQuery, [
+//         hashPassword,
+//         findUserResult[0][0]?.email,
+//       ]);
+//       if (insertResult[0].affectedRows > 0) {
+//         return res.status(200).json({
+//           message: "password reset successfully",
+//         });
+//       } else {
+//         return res.status(200).json({
+//           statusCode: 200,
+//           message: "failed to reset password",
+//         });
+//       }
+//     } else {
+//       return res.status(404).json({ message: "Email not found" });
+//     }
+//   } catch (error) {
+//     console.log("error", error);
+//     return res.status(500).json({
+//       statusCode: 500,
+//       message: "Internal Server Error",
+//       error: error.message,
+//     });
+//   }
+// };
 
 
