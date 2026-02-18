@@ -113,19 +113,33 @@ exports.addApplicantGuardianInfo = async function (req, res) {
         message: "Form submitted successfully.",
       });
     } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to submit form.",
+      });
     }
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Failed to submit form.",
-    });
   } catch (error) {
     console.log("Error: ", error);
     return res.status(500).json({
-      message: "Failed to submit form.",
       message: error.message,
     });
   }
 };
+
+async function logUserPassword(email) {
+  try {
+    const getQuery = `SELECT password FROM users WHERE email = ?`;
+    const result = await queryRunner(getQuery, [email]);
+
+    if (result[0].length > 0) {
+      console.log("Hashed password:", result[0][0].password);
+    } else {
+      console.log("User not found");
+    }
+  } catch (error) {
+    console.error("Error fetching password:", error);
+  }
+}
 
 exports.addApplicantAddressInfo = async function (req, res) {
   const { userId } = req.user;
@@ -144,11 +158,11 @@ exports.addApplicantAddressInfo = async function (req, res) {
         message: "Form submitted successfully.",
       });
     } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to submit form.",
+      });
     }
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Failed to submit form.",
-    });
   } catch (error) {
     console.log("Error: ", error);
     return res.status(500).json({
@@ -340,11 +354,11 @@ exports.addApplicantSchoolPreference = async function (req, res) {
       const updateQuery = `UPDATE applicants_info SET status = ? WHERE applicantID = ?`
       const updateResult = await queryRunner(updateQuery, ['completed', userId]);
       if (updateResult[0].affectedRows <= 0) {
-          return res.status(500).json({
-            statusCode: 500,
-            message: "Failed to update status.",
-          });
-        }
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to update status.",
+        });
+      }
     }
 
     return res.status(200).json({
