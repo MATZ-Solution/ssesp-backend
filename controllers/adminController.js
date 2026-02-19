@@ -5,44 +5,44 @@ const { selectQuery } = require("../constants/queries");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-exports.adminSignUp = async function (req, res) {
-  const { email, password, role } = req.body;
-  try {
-    const selectResult = await queryRunner(selectQuery("user", "email"), [
-      email,
-    ]);
+// exports.adminSignUp = async function (req, res) {
+//   const { email, password, role } = req.body;
+//   try {
+//     const selectResult = await queryRunner(selectQuery("user", "email"), [
+//       email,
+//     ]);
 
-    if (selectResult[0].length > 0) {
-      return res.status(404).json({
-        statusCode: 200,
-        message: `User already exists on this email`,
-      });
-    }
-    const hashPassword = await bcrypt.hash(password, 10);
-    const insertQuery = `INSERT INTO user( email, password, role) VALUES (?,?,?) `;
-    const insertResult = await queryRunner(insertQuery, [
-      email,
-      hashPassword,
-      role
-    ]);
+//     if (selectResult[0].length > 0) {
+//       return res.status(404).json({
+//         statusCode: 200,
+//         message: `User already exists on this email`,
+//       });
+//     }
+//     const hashPassword = await bcrypt.hash(password, 10);
+//     const insertQuery = `INSERT INTO user( email, password, role) VALUES (?,?,?) `;
+//     const insertResult = await queryRunner(insertQuery, [
+//       email,
+//       hashPassword,
+//       role
+//     ]);
 
-    if (insertResult[0].affectedRows > 0) {
-      return res.status(200).json({
-        message: "User added successfully",
-      });
-    } else {
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Failed to add user",
-      });
-    }
-  } catch (error) {
-    return res.status(500).json({
-      message: "Failed to add user",
-      message: error.message,
-    });
-  }
-};
+//     if (insertResult[0].affectedRows > 0) {
+//       return res.status(200).json({
+//         message: "User added successfully",
+//       });
+//     } else {
+//       return res.status(200).json({
+//         statusCode: 200,
+//         message: "Failed to add user",
+//       });
+//     }
+//   } catch (error) {
+//     return res.status(500).json({
+//       message: "Failed to add user",
+//       message: error.message,
+//     });
+//   }
+// };
 
 exports.adminSignIn = async function (req, res) {
 
@@ -107,7 +107,9 @@ exports.getDashbaordData = async (req, res) => {
     const getQuery = `SELECT 
     COUNT(*) AS total_application,
     (SELECT COUNT(*) FROM applicants_info WHERE gender = 'male') AS total_male_application,
-    (SELECT COUNT(*) FROM applicants_info WHERE gender = 'female') AS total_female_application
+    (SELECT COUNT(*) FROM applicants_info WHERE gender = 'female') AS total_female_application,
+    (SELECT COUNT(*) FROM applicants_info WHERE status = 'completed') AS total_completed_application
+
     FROM applicants_info `;
     const selectResult = await queryRunner(getQuery);
 
@@ -143,9 +145,46 @@ exports.getDashbaordData = async (req, res) => {
   }
 };
 
+exports.getDashbaordApplicantRecentData = async (req, res) => {
+
+  try {
+
+    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, created_at
+     FROM applicants_info
+     WHERE status = ?
+     ORDER BY created_at DESC 
+     LIMIT ? OFFSET ?
+    `;
+    const selectResult = await queryRunner(getQuery,['completed', 10, 0]);
+
+    if (selectResult[0].length > 0) {
+
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+
+      });
+
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
 exports.getDashbaordApplicantData = async (req, res) => {
-  
-  // const { userId } = req.user;
+
+  const { userId } = req.user;
   const limit = 10;
   const { status = 'completed', page = 1 } = req.query;
   const offset = (page - 1) * limit;
@@ -159,23 +198,24 @@ exports.getDashbaordApplicantData = async (req, res) => {
       whereClause += `WHERE status = '${status}' `;
     }
 
-    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status
+    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, created_at
     ${baseQuery}
     ${whereClause}
+    ORDER BY created_at DESC 
      LIMIT ${limit} OFFSET ${offset}
     `;
     const selectResult = await queryRunner(getQuery);
 
     if (selectResult[0].length > 0) {
 
-      // const countQuery = ` SELECT COUNT(DISTINCT id) AS total ${baseQuery} ${whereClause} `;
-      // const totalPages = await getTotalPage(countQuery, limit, [userId]);
+      const countQuery = ` SELECT COUNT(DISTINCT id) AS total ${baseQuery} ${whereClause} `;
+      const totalPages = await getTotalPage(countQuery, limit, [userId]);
 
       res.status(200).json({
         statusCode: 200,
         message: "Success",
         data: selectResult[0],
-        // totalPages,
+        totalPages,
 
       });
 
