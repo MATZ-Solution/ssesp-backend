@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile)); // This comes after app is initialized
 
 app.get("/", (req, res) => {
-  res.send("Welcome SSESP! 19-02-2025 again 8");
+  res.send("Welcome SSESP! 20-02-2025 again 8");
 });
 
 getConnectionFromPool();
