@@ -184,7 +184,7 @@ exports.getDashbaordApplicantData = async (req, res) => {
 
   const { userId } = req.user;
   const limit = 10;
-  const { status = 'completed', page = 1, gender='', district='' } = req.query;
+  const { status = 'completed', page = 1, gender = '', district = '', class: studentClass = '', schoolType = '' } = req.query;
   const offset = (page - 1) * limit;
 
   try {
@@ -204,9 +204,19 @@ exports.getDashbaordApplicantData = async (req, res) => {
       params.push(gender);
     }
 
-     if (district) {
+    if (district) {
       conditions.push(` district = ? `);
       params.push(district);
+    }
+
+    if (studentClass) {
+      conditions.push(` studyingInClass = ? `);
+      params.push(studentClass)
+    }
+
+    if (schoolType) {
+      conditions.push(` schoolCategory = ? `);
+      params.push(schoolType);
     }
 
     let whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -233,6 +243,99 @@ exports.getDashbaordApplicantData = async (req, res) => {
 
       });
 
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+exports.getApplicantInfo = async (req, res) => {
+  const { userId } = req.query;
+  try {
+    const getQuery = `SELECT studentName, gender, studentBForm, dob, gender, fileUrl, religion FROM applicants_info WHERE applicantID = ?`;
+    const selectResult = await queryRunner(getQuery, [userId]);
+
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+exports.getApplicantGuardianInfo = async (req, res) => {
+  const { userId } = req.query;
+  try {
+    const getQuery = `SELECT  guardianName,
+      guardianCNIC,
+      guardianDomicileDistrict,
+      guardianProfession,
+      guardianannualIncome,
+      relation,
+      guardianContactNumber,
+      siblings_under_sef,
+      no_siblings_under_sef,
+      guardianContactWhattsappNumber FROM applicants_info WHERE applicantID = ?`;
+    const selectResult = await queryRunner(getQuery, [userId]);
+
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+exports.getApplicantDocuments = async (req, res) => {
+  const { userId } = req.query;
+  try {
+    const getQuery = `SELECT fileUrl, documentName FROM applicant_document WHERE applicantID = ?`;
+    const selectResult = await queryRunner(getQuery, [userId]);
+
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
     } else {
       res.status(200).json({
         data: [],
