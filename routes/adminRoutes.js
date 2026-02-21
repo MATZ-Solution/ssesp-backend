@@ -11,6 +11,14 @@ router.get("/getDashbaordData", verifyTokenAdmin, authorizeRoles("admin"), admin
 router.get("/getDashbaordApplicantRecentData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordApplicantRecentData);
 router.get("/getDashbaordApplicantData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordApplicantData);
 
+router.get("/getApplicantInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantInfo);
+router.get("/getApplicantGuardianInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantGuardianInfo);
+router.get("/getApplicantDocuments" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantDocuments);
+
+// router.get("/getApplicantAddressInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantAddressInfo);
+// router.get("/getApplicantSchoolInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantSchoolInfo);
+// router.get("/getApplicantSchoolPreference" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantSchoolPreference);
+
 // router.post("/signUp", adminController.adminSignUp);
 // router.post("/changePasword", adminController.changePasword);
 

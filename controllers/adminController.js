@@ -104,12 +104,10 @@ exports.adminSignIn = async function (req, res) {
 exports.getDashbaordData = async (req, res) => {
   // const { userId } = req.user;
   try {
-    const getQuery = `SELECT 
-    COUNT(*) AS total_application,
-    (SELECT COUNT(*) FROM applicants_info WHERE gender = 'male') AS total_male_application,
-    (SELECT COUNT(*) FROM applicants_info WHERE gender = 'female') AS total_female_application,
+    const getQuery = `SELECT COUNT(*) AS total_application,
+    (SELECT COUNT(*) FROM applicants_info WHERE (gender = 'male' AND status = 'completed')) AS total_male_application,
+    (SELECT COUNT(*) FROM applicants_info WHERE (gender = 'female' AND status = 'completed') ) AS total_female_application,
     (SELECT COUNT(*) FROM applicants_info WHERE status = 'completed') AS total_completed_application
-
     FROM applicants_info `;
     const selectResult = await queryRunner(getQuery);
 
@@ -155,7 +153,7 @@ exports.getDashbaordApplicantRecentData = async (req, res) => {
      ORDER BY created_at DESC 
      LIMIT ? OFFSET ?
     `;
-    const selectResult = await queryRunner(getQuery,['completed', 10, 0]);
+    const selectResult = await queryRunner(getQuery, ['completed', 10, 0]);
 
     if (selectResult[0].length > 0) {
 
@@ -186,17 +184,42 @@ exports.getDashbaordApplicantData = async (req, res) => {
 
   const { userId } = req.user;
   const limit = 10;
-  const { status = 'completed', page = 1 } = req.query;
+  const { status = 'completed', page = 1, gender = '', district = '', class: studentClass = '', schoolType = '' } = req.query;
   const offset = (page - 1) * limit;
 
   try {
 
     let baseQuery = ` FROM applicants_info `
-    let whereClause = "";
+
+    let params = [];
+    let conditions = [];
 
     if (status) {
-      whereClause += `WHERE status = '${status}' `;
+      conditions.push(` status = ?`);
+      params.push(status);
     }
+
+    if (gender) {
+      conditions.push(` gender = ? `);
+      params.push(gender);
+    }
+
+    if (district) {
+      conditions.push(` district = ? `);
+      params.push(district);
+    }
+
+    if (studentClass) {
+      conditions.push(` studyingInClass = ? `);
+      params.push(studentClass)
+    }
+
+    if (schoolType) {
+      conditions.push(` schoolCategory = ? `);
+      params.push(schoolType);
+    }
+
+    let whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, created_at
     ${baseQuery}
@@ -204,12 +227,13 @@ exports.getDashbaordApplicantData = async (req, res) => {
     ORDER BY created_at DESC 
      LIMIT ${limit} OFFSET ${offset}
     `;
-    const selectResult = await queryRunner(getQuery);
+
+    const selectResult = await queryRunner(getQuery, params);
 
     if (selectResult[0].length > 0) {
 
       const countQuery = ` SELECT COUNT(DISTINCT id) AS total ${baseQuery} ${whereClause} `;
-      const totalPages = await getTotalPage(countQuery, limit, [userId]);
+      const totalPages = await getTotalPage(countQuery, limit, params);
 
       res.status(200).json({
         statusCode: 200,
@@ -219,6 +243,99 @@ exports.getDashbaordApplicantData = async (req, res) => {
 
       });
 
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+exports.getApplicantInfo = async (req, res) => {
+  const { userId } = req.query;
+  try {
+    const getQuery = `SELECT studentName, gender, studentBForm, dob, gender, fileUrl, religion FROM applicants_info WHERE applicantID = ?`;
+    const selectResult = await queryRunner(getQuery, [userId]);
+
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+exports.getApplicantGuardianInfo = async (req, res) => {
+  const { userId } = req.query;
+  try {
+    const getQuery = `SELECT  guardianName,
+      guardianCNIC,
+      guardianDomicileDistrict,
+      guardianProfession,
+      guardianannualIncome,
+      relation,
+      guardianContactNumber,
+      siblings_under_sef,
+      no_siblings_under_sef,
+      guardianContactWhattsappNumber FROM applicants_info WHERE applicantID = ?`;
+    const selectResult = await queryRunner(getQuery, [userId]);
+
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+exports.getApplicantDocuments = async (req, res) => {
+  const { userId } = req.query;
+  try {
+    const getQuery = `SELECT fileUrl, documentName FROM applicant_document WHERE applicantID = ?`;
+    const selectResult = await queryRunner(getQuery, [userId]);
+
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
     } else {
       res.status(200).json({
         data: [],
