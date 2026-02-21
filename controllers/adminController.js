@@ -352,6 +352,41 @@ exports.getApplicantDocuments = async (req, res) => {
   }
 };
 
+exports.getApplicantSchoolInfo = async (req, res) => {
+  const { userId } = req.query;
+  try {
+
+    const getQuery = `SELECT schoolName, schoolCategory, schoolSemisCode, studyingInClass, enrollmentYear,
+    schoolGRNo, headmasterName, headmasterContact FROM applicants_info WHERE applicantID = ?`;
+    const selectResult = await queryRunner(getQuery, [userId]);
+
+    const prevSchoolQuery = `SELECT class, schoolCategory, semisCode, district, yearOfPassing
+    FROM applicant_school WHERE applicantID = ? `
+    const prevSchoolResult = await queryRunner(prevSchoolQuery, [userId]);
+
+    if (selectResult[0].length > 0 && prevSchoolResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+        previousSchool: prevSchoolResult[0]
+      });
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
 // exports.changePasword = async function (req, res) {
 //   const { password, email } = req.body;
 //   try {
