@@ -14,6 +14,7 @@ router.get("/getDashbaordApplicantData", verifyTokenAdmin, authorizeRoles("admin
 router.get("/getApplicantInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantInfo);
 router.get("/getApplicantGuardianInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantGuardianInfo);
 router.get("/getApplicantDocuments" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantDocuments);
+router.get("/getApplicantSchoolInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantSchoolInfo);
 
 // router.get("/getApplicantAddressInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantAddressInfo);
 // router.get("/getApplicantSchoolInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantSchoolInfo);
