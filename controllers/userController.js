@@ -109,7 +109,7 @@ exports.signIn = async function (req, res) {
     );
     if (!checkPass) {
       return res
-        .status(401)
+        .status(400)
         .json({ message: "Invalid Email or Application ID" });
     }
 

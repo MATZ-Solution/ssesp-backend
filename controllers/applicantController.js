@@ -273,7 +273,7 @@ exports.addApplicantDocument = async function (req, res) {
       });
     }
 
-    if (req.files.length > 4) {
+    if (req.files.length > 5) {
       return res.status(400).json({
         statusCode: 400,
         message: "Too many files. Maximum 4 files allowed.",
