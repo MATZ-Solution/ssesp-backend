@@ -4,6 +4,7 @@ const { getTotalPage } = require("../helper/getTotalPage");
 const { selectQuery } = require("../constants/queries");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { AGE_RULES, CUTOFF_DATE } = require("../data/age-rules")
 
 // exports.adminSignUp = async function (req, res) {
 //   const { email, password, role } = req.body;
@@ -97,6 +98,211 @@ exports.adminSignIn = async function (req, res) {
       statusCode: 500,
       message: "Failed to SignIn",
       error: error.message,
+    });
+  }
+};
+
+exports.adminVerifyAge = async function (req, res) {
+
+  const { status, reason } = req.body;
+  const { applicantID } = req.params;
+
+  try {
+    const applicationStatus = status === 'true' ? 'In Review' : 'Rejected';
+
+    let query = `UPDATE applicants_info SET application_status = ?, is_age_verified = ?`;
+    const params = [applicationStatus, status];
+
+    if (status === 'false') {
+      query += `, application_remark = ?`;
+      params.push(reason);
+    }
+
+    if (status === 'true') {
+      query += `, application_stage = ?`;
+      params.push('view-form-2');
+    }
+
+    query += ` WHERE applicantID = ?`;
+    params.push(applicantID);
+
+    const result = await queryRunner(query, params);
+
+    if (result[0].affectedRows === 0) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Age verification updated successfully.",
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: error.message || "Something went wrong.",
+    });
+  }
+};
+
+exports.adminVerifyGuardianSalary = async function (req, res) {
+
+  const { status, reason } = req.body;
+  const { applicantID } = req.params;
+
+  try {
+    const applicationStatus = status === 'true' ? 'In Review' : 'Rejected';
+
+    let query = `UPDATE applicants_info SET application_status = ?, is_gurdian_salary_verified = ?`;
+    const params = [applicationStatus, status];
+
+    if (status === 'false') {
+      query += `, application_remark = ?`;
+      params.push(reason);
+    }
+    if (status === 'true') {
+      query += `, application_stage = ?`;
+      params.push('view-form-3');
+    }
+    query += ` WHERE applicantID = ?`;
+    params.push(applicantID);
+
+    const result = await queryRunner(query, params);
+
+    if (result[0].affectedRows === 0) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Age verification updated successfully.",
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: error.message || "Something went wrong.",
+    });
+  }
+};
+
+exports.adminVerifyApplicantSchool = async function (req, res) {
+
+  const { status, reason } = req.body;
+  const { applicantID } = req.params;
+
+  try {
+    const applicationStatus = status === 'true' ? 'In Review' : 'Rejected';
+
+    let query = `UPDATE applicants_info SET application_status = ?, is_school_verified = ?`;
+    const params = [applicationStatus, status];
+
+    if (status === 'false') {
+      query += `, application_remark = ?`;
+      params.push(reason);
+    }
+
+    if (status === 'true') {
+      query += `, application_stage = ?`;
+      params.push('view-form-4');
+    }
+
+    query += ` WHERE applicantID = ?`;
+    params.push(applicantID);
+
+    const result = await queryRunner(query, params);
+
+    if (result[0].affectedRows === 0) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Age verification updated successfully.",
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: error.message || "Something went wrong.",
+    });
+  }
+};
+
+exports.adminVerifyDocument = async function (req, res) {
+
+  const { age, verifyClass, verfication = [] } = req.body
+  const { applicantID } = req.params
+
+  try {
+
+    if (verfication?.length === 0) {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Invalid data provided",
+      });
+    }
+
+    if (age) {
+      const { status, resson } = age
+      if (status === 'complete') {
+        const getQuery = `UPDATE applicants_info set application_status = ? WHERE applicantID = ?`;
+        const selectResult = await queryRunner(getQuery, ["approve", applicantID]);
+      } else {
+        const getQuery = `UPDATE applicants_info set application_status = ?, reason = ? WHERE applicantID = ?`;
+        const selectResult = await queryRunner(getQuery, ["rejected", resson, applicantID]);
+      }
+    }
+
+    if (verifyClass) {
+      const { status, resson } = verifyClass
+      if (status === 'complete') {
+        const getQuery = `UPDATE applicants_info set application_status = ? WHERE applicantID = ?`;
+        const selectResult = await queryRunner(getQuery, ["approve", applicantID]);
+      } else {
+        const getQuery = `UPDATE applicants_info set application_status = ?, reason = ? WHERE applicantID = ?`;
+        const selectResult = await queryRunner(getQuery, ["rejected", resson, applicantID]);
+      }
+    }
+
+    for (const data of verfication) {
+      const result = await queryRunner(
+        `UPDATE applicant_document SET status = ?, reason = ? WHERE id = ?`,
+        [data.status, data.reason, data.id]
+      );
+
+      if (result[0].affectedRows <= 0) {
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to save data.",
+        });
+      }
+    }
+
+    const getQuery = `SELECT application_status FROM applicants_info WHERE applicantID = ?`;
+    const selectResult = await queryRunner(getQuery, [applicantID]);
+
+
+
+
+  } catch (error) {
+    console.log("Error:", error);
+
+    return res.status(500).json({
+      statusCode: 500,
+      message: error.message || "Failed to submit file.",
     });
   }
 };
@@ -221,7 +427,7 @@ exports.getDashbaordApplicantData = async (req, res) => {
 
     let whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, created_at
+    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, application_stage, created_at
     ${baseQuery}
     ${whereClause}
     ORDER BY created_at DESC 
@@ -262,15 +468,34 @@ exports.getDashbaordApplicantData = async (req, res) => {
 exports.getApplicantInfo = async (req, res) => {
   const { userId } = req.query;
   try {
-    const getQuery = `SELECT studentName, gender, studentBForm, dob, gender, fileUrl, religion FROM applicants_info WHERE applicantID = ?`;
-    const selectResult = await queryRunner(getQuery, [userId]);
+    const getQuery = `
+      SELECT studentName, gender, studentBForm, DATE(dob) as dob, 
+      fileUrl, religion, studyingInClass, application_status, application_remark, is_age_verified,
+      TIMESTAMPDIFF(YEAR, DATE(dob), ?) AS age
+      FROM applicants_info 
+      WHERE applicantID = ?
+    `;
+
+    const selectResult = await queryRunner(getQuery, [CUTOFF_DATE, userId]);
 
     if (selectResult[0].length > 0) {
+      const student = selectResult[0][0]; // ✅ get first student object
+
+      // ✅ Extract class number from "Class 8" → 8
+      const classNumber = parseInt(student.studyingInClass.replace(/\D/g, ''));
+      const maxAge = AGE_RULES[classNumber];
+
+      const eligible = student.age <= maxAge;
+
       res.status(200).json({
         statusCode: 200,
         message: "Success",
         data: selectResult[0],
+        maxAgeAllowed: maxAge,
+        studentAge: student.age,
+        eligible: eligible ? "Eligible" : "Not Eligible"
       });
+
     } else {
       res.status(200).json({
         data: [],
@@ -281,7 +506,7 @@ exports.getApplicantInfo = async (req, res) => {
     console.error("Query error: ", error);
     return res.status(500).json({
       statusCode: 500,
-      message: "Data Not Found",
+      message: "Internal Server Error",
       error: error.message,
     });
   }
@@ -295,7 +520,9 @@ exports.getApplicantGuardianInfo = async (req, res) => {
       guardianDomicileDistrict,
       guardianProfession,
       guardianannualIncome,
+      is_gurdian_salary_verified,
       relation,
+      application_status, application_remark, is_gurdian_salary_verified,
       guardianContactNumber,
       siblings_under_sef,
       no_siblings_under_sef,
@@ -327,7 +554,7 @@ exports.getApplicantGuardianInfo = async (req, res) => {
 exports.getApplicantDocuments = async (req, res) => {
   const { userId } = req.query;
   try {
-    const getQuery = `SELECT fileUrl, documentName FROM applicant_document WHERE applicantID = ?`;
+    const getQuery = `SELECT id, fileUrl, documentName, status FROM applicant_document WHERE applicantID = ?`;
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
@@ -357,7 +584,9 @@ exports.getApplicantSchoolInfo = async (req, res) => {
   try {
 
     const getQuery = `SELECT schoolName, schoolCategory, schoolSemisCode, studyingInClass, enrollmentYear,
-    schoolGRNo, headmasterName, headmasterContact FROM applicants_info WHERE applicantID = ?`;
+    schoolGRNo, is_school_verified, headmasterName, headmasterContact,
+     application_status, application_remark, is_school_verified
+     FROM applicants_info WHERE applicantID = ?`;
     const selectResult = await queryRunner(getQuery, [userId]);
 
     const prevSchoolQuery = `SELECT class, schoolCategory, semisCode, district, yearOfPassing
