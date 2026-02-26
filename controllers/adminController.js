@@ -4,6 +4,7 @@ const { getTotalPage } = require("../helper/getTotalPage");
 const { selectQuery } = require("../constants/queries");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const ExcelJS = require("exceljs");
 
 // exports.adminSignUp = async function (req, res) {
 //   const { email, password, role } = req.body;
@@ -387,6 +388,100 @@ exports.getApplicantSchoolInfo = async (req, res) => {
   }
 };
 
+
+
+exports.exportDashboardApplicantData = async (req, res) => {
+
+  const {
+    status = "completed",
+    gender = "",
+    district = "",
+    class: studentClass = "",
+    schoolType = ""
+  } = req.query;
+
+  try {
+
+    let baseQuery = ` FROM applicants_info `;
+    let params = [];
+    let conditions = [];
+
+    if (status) {
+      conditions.push(` status = ?`);
+      params.push(status);
+    }
+
+    if (gender) {
+      conditions.push(` gender = ? `);
+      params.push(gender);
+    }
+
+    if (district) {
+      conditions.push(` district = ? `);
+      params.push(district);
+    }
+
+    if (studentClass) {
+      conditions.push(` studyingInClass = ? `);
+      params.push(studentClass);
+    }
+
+    if (schoolType) {
+      conditions.push(` schoolCategory = ? `);
+      params.push(schoolType);
+    }
+
+    let whereClause = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+    const query = `
+      SELECT applicantID, studentName, schoolCategory, studyingInClass, status, created_at
+      ${baseQuery}
+      ${whereClause}
+      ORDER BY created_at DESC
+    `;
+
+    const result = await queryRunner(query, params);
+    const data = result[0];
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Applicants");
+
+    worksheet.columns = [
+      { header: "Applicant ID", key: "applicantID", width: 20 },
+      { header: "Student Name", key: "studentName", width: 25 },
+      { header: "School Category", key: "schoolCategory", width: 20 },
+      { header: "Class", key: "studyingInClass", width: 15 },
+      { header: "Status", key: "status", width: 15 },
+      { header: "Created At", key: "created_at", width: 25 },
+    ];
+
+    worksheet.addRows(data);
+
+    worksheet.getRow(1).font = { bold: true };
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=Applicants.xlsx"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error("Export error:", error);
+    res.status(500).json({
+      message: "Export Failed",
+      error: error.message,
+    });
+  }
+};
 // exports.changePasword = async function (req, res) {
 //   const { password, email } = req.body;
 //   try {

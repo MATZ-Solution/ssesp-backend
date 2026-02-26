@@ -10,7 +10,7 @@ router.post("/signIn", adminController.adminSignIn);
 router.get("/getDashbaordData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordData);
 router.get("/getDashbaordApplicantRecentData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordApplicantRecentData);
 router.get("/getDashbaordApplicantData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordApplicantData);
-
+router.get("/export-applicants", verifyTokenAdmin, authorizeRoles("admin"), adminController.exportDashboardApplicantData);
 router.get("/getApplicantInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantInfo);
 router.get("/getApplicantGuardianInfo" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantGuardianInfo);
 router.get("/getApplicantDocuments" , verifyTokenAdmin, authorizeRoles("admin"), adminController.getApplicantDocuments);
