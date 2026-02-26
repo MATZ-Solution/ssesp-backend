@@ -7,6 +7,11 @@ const router = express.Router();
 
 router.post("/signIn", adminController.adminSignIn);
 
+router.put("/adminVerifyAge/:applicantID", verifyTokenAdmin, authorizeRoles("admin"), adminController.adminVerifyAge);
+router.put("/adminVerifyGuardianSalary/:applicantID", verifyTokenAdmin, authorizeRoles("admin"), adminController.adminVerifyGuardianSalary);
+router.put("/adminVerifyApplicantSchool/:applicantID", verifyTokenAdmin, authorizeRoles("admin"), adminController.adminVerifyApplicantSchool);
+router.put("/adminVerifyDocument/:applicantID", verifyTokenAdmin, authorizeRoles("admin"), adminController.adminVerifyDocument);
+
 router.get("/getDashbaordData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordData);
 router.get("/getDashbaordApplicantRecentData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordApplicantRecentData);
 router.get("/getDashbaordApplicantData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordApplicantData);
