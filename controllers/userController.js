@@ -47,7 +47,6 @@ exports.signUp = async function (req, res) {
         let emailStatus = await sendEmail(email, "Application ID", emailTemplate);
 
         if (!emailStatus.success) {
-
           const deleteQuery = `DELETE FROM applicants WHERE id = ?`;
           const updateResult = await queryRunner(deleteQuery, [insertID]);
           if (updateResult[0].affectedRows > 0) {

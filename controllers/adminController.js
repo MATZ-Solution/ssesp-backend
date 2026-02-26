@@ -108,7 +108,7 @@ exports.adminVerifyAge = async function (req, res) {
   const { applicantID } = req.params;
 
   try {
-    const applicationStatus = status === 'true' ? 'In Review' : 'Rejected';
+    const applicationStatus = status === 'true' ? 'in review' : 'rejected';
 
     let query = `UPDATE applicants_info SET application_status = ?, is_age_verified = ?`;
     const params = [applicationStatus, status];
@@ -155,7 +155,7 @@ exports.adminVerifyGuardianSalary = async function (req, res) {
   const { applicantID } = req.params;
 
   try {
-    const applicationStatus = status === 'true' ? 'In Review' : 'Rejected';
+    const applicationStatus = status === 'true' ? 'in review' : 'rejected';
 
     let query = `UPDATE applicants_info SET application_status = ?, is_gurdian_salary_verified = ?`;
     const params = [applicationStatus, status];
@@ -200,7 +200,7 @@ exports.adminVerifyApplicantSchool = async function (req, res) {
   const { applicantID } = req.params;
 
   try {
-    const applicationStatus = status === 'true' ? 'In Review' : 'Rejected';
+    const applicationStatus = status === 'true' ? 'in review' : 'rejected';
 
     let query = `UPDATE applicants_info SET application_status = ?, is_school_verified = ?`;
     const params = [applicationStatus, status];
@@ -243,7 +243,7 @@ exports.adminVerifyApplicantSchool = async function (req, res) {
 
 exports.adminVerifyDocument = async function (req, res) {
 
-  const { age, verifyClass, verfication = [] } = req.body
+  const { verfication = [] } = req.body
   const { applicantID } = req.params
 
   try {
@@ -255,32 +255,10 @@ exports.adminVerifyDocument = async function (req, res) {
       });
     }
 
-    if (age) {
-      const { status, resson } = age
-      if (status === 'complete') {
-        const getQuery = `UPDATE applicants_info set application_status = ? WHERE applicantID = ?`;
-        const selectResult = await queryRunner(getQuery, ["approve", applicantID]);
-      } else {
-        const getQuery = `UPDATE applicants_info set application_status = ?, reason = ? WHERE applicantID = ?`;
-        const selectResult = await queryRunner(getQuery, ["rejected", resson, applicantID]);
-      }
-    }
-
-    if (verifyClass) {
-      const { status, resson } = verifyClass
-      if (status === 'complete') {
-        const getQuery = `UPDATE applicants_info set application_status = ? WHERE applicantID = ?`;
-        const selectResult = await queryRunner(getQuery, ["approve", applicantID]);
-      } else {
-        const getQuery = `UPDATE applicants_info set application_status = ?, reason = ? WHERE applicantID = ?`;
-        const selectResult = await queryRunner(getQuery, ["rejected", resson, applicantID]);
-      }
-    }
-
     for (const data of verfication) {
       const result = await queryRunner(
-        `UPDATE applicant_document SET status = ?, reason = ? WHERE id = ?`,
-        [data.status, data.reason, data.id]
+        `UPDATE applicant_document SET status = ?, remark = ? WHERE id = ?`,
+        [data.status, data.reason ?? null, data.id]
       );
 
       if (result[0].affectedRows <= 0) {
@@ -291,11 +269,31 @@ exports.adminVerifyDocument = async function (req, res) {
       }
     }
 
-    const getQuery = `SELECT application_status FROM applicants_info WHERE applicantID = ?`;
-    const selectResult = await queryRunner(getQuery, [applicantID]);
+    const [documents] = await queryRunner(
+      `SELECT documentName, status, remark, fileUrl FROM applicant_document WHERE applicantID = ?`,
+      [applicantID]
+    );
 
+    const incomeDoc = documents.find(doc => doc.documentName === 'Parents / Guardian Income Certficaition');
+    const isIncomeMissing = !incomeDoc || !incomeDoc.fileUrl;
+    const allApproved = documents.every(doc => doc.status === 'correct');
 
+    if (allApproved && !isIncomeMissing) {
+      await queryRunner(
+        `UPDATE applicants_info SET application_status = ?, is_document_verified = ?, application_remark = ? WHERE applicantID = ?`,
+        ['completed', 'true', null, applicantID]
+      );
+    } else {
+      await queryRunner(
+        `UPDATE applicants_info SET application_status = ?, application_remark = ?, is_document_verified = ? WHERE applicantID = ?`,
+        ['in review', 'Document Verification Failed', 'false', applicantID]
+      );
+    }
 
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Documents verified successfully.",
+    });
 
   } catch (error) {
     console.log("Error:", error);
@@ -554,7 +552,7 @@ exports.getApplicantGuardianInfo = async (req, res) => {
 exports.getApplicantDocuments = async (req, res) => {
   const { userId } = req.query;
   try {
-    const getQuery = `SELECT id, fileUrl, documentName, status FROM applicant_document WHERE applicantID = ?`;
+    const getQuery = `SELECT id, fileUrl, filekey, documentName, status, remark FROM applicant_document WHERE applicantID = ?`;
     const selectResult = await queryRunner(getQuery, [userId]);
 
     if (selectResult[0].length > 0) {
