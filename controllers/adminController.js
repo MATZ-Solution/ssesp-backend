@@ -280,12 +280,12 @@ exports.adminVerifyDocument = async function (req, res) {
 
     if (allApproved && !isIncomeMissing) {
       await queryRunner(
-        `UPDATE applicants_info SET application_status = ?, is_document_verified = ?, application_remark = ? WHERE applicantID = ?`,
+        `UPDATE applicants_info SET application_status = ?, is_document_verified = ?, application_remark = ?, updated_at = NOW() WHERE applicantID = ?`,
         ['completed', 'true', null, applicantID]
       );
     } else {
       await queryRunner(
-        `UPDATE applicants_info SET application_status = ?, application_remark = ?, is_document_verified = ? WHERE applicantID = ?`,
+        `UPDATE applicants_info SET application_status = ?, application_remark = ?, is_document_verified = ?, updated_at = NOW() WHERE applicantID = ?`,
         ['in review', 'Document Verification Failed', 'false', applicantID]
       );
     }

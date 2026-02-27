@@ -2,6 +2,7 @@ const { queryRunner } = require("../helper/queryRunner");
 const { getTotalPage } = require("../helper/getTotalPage");
 const divisionData = require("../data/schools_grouped_by_division_updated_gender");
 const { appendFile } = require("fs");
+const { deleteS3File } = require("../utils/deleteS3Files");
 
 exports.addApplicantInfo = async function (req, res) {
   const { studentName, gender, studentBForm, dob, religion } = req.body;
@@ -360,6 +361,60 @@ exports.addApplicantSchoolPreference = async function (req, res) {
   }
 };
 
+exports.applicantEditDocument = async function (req, res) {
+  
+  const { userId } = req.user;
+
+  let deleteFiles = [];
+  try {
+    deleteFiles = req.body.deleteFiles ? JSON.parse(req.body.deleteFiles) : [];
+  } catch {
+    return res.status(400).json({ statusCode: 400, message: "Invalid deleteFiles format." });
+  }
+
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ statusCode: 400, message: "No files uploaded." });
+    }
+
+    if (req.files.length > 5) {
+      return res.status(400).json({ statusCode: 400, message: "Too many files. Maximum 5 files allowed." });
+    }
+
+    for (const file of req.files) {
+      const result = await queryRunner(
+        "INSERT INTO applicant_document (applicantID, documentName, fileUrl, fileKey) VALUES (?, ?, ?, ?)",
+        [userId, file.fieldname, file.location, file.key]
+      );
+
+      if (result[0].affectedRows <= 0) {
+        return res.status(500).json({ statusCode: 500, message: "Failed to save file." });
+      }
+    }
+
+    if (deleteFiles.length > 0) {
+      for (const file of deleteFiles) {
+        const result = await queryRunner(
+          "DELETE FROM applicant_document WHERE  id = ?",
+          [file.id]
+        );
+
+        if (result[0].affectedRows <= 0) {
+          return res.status(500).json({ statusCode: 500, message: "Failed to delete record." });
+        }
+
+        await deleteS3File(file.fileKey);
+      }
+    }
+
+    return res.status(200).json({ statusCode: 200, message: "Files uploaded successfully." });
+
+  } catch (error) {
+    console.error("applicantEditDocument error:", error);
+    return res.status(500).json({ statusCode: 500, message: error.message || "Failed to submit file." });
+  }
+};
+
 exports.getApplicantInfo = async (req, res) => {
   const { userId } = req.user;
   try {
@@ -623,7 +678,7 @@ exports.getIsApplicantVerified = async (req, res) => {
     // Check if any document has not been reviewed by admin yet
     const isAllChecked = documents.some(doc => doc.status === null || doc.status === 'null');
     if (isAllChecked) {
-      return res.status(200).json({ status: 'in review',message: 'Your document is in review' });
+      return res.status(200).json({ status: 'in review', message: 'Your document is in review' });
     }
 
     // Check all documents are verified/correct by admin
@@ -678,3 +733,13 @@ exports.getApplicantDocuments = async (req, res) => {
 };
 
 
+// delete s3 document
+exports.deleteS3Document = async (req, res) => {
+  const { fileKey } = req.body;
+  try {
+    await deleteS3File(fileKey)
+    return res.status(200).send("File deleted successfully.")
+  } catch (error) {
+    console.error("error: ", error);
+  }
+};
