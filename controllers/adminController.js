@@ -665,7 +665,32 @@ exports.exportDashboardApplicantData = async (req, res) => {
       : "";
 
     const query = `
-      SELECT applicantID, studentName, schoolCategory, studyingInClass, status, created_at
+      SELECT
+        applicantID,
+        studentName,
+        gender,
+        fileUrl,
+        studentBForm,
+        dob,
+        religion,
+        guardianName,
+        guardianCNIC,
+        relation,
+        guardianDomicileDistrict,
+        guardianContactNumber,
+        guardianannualIncome,
+        guardianContactWhattsappNumber,
+        postalAddress,
+        division,
+        district,
+        schoolName,
+        schoolCategory,
+        schoolSemisCode,
+        studyingInClass,
+        enrollmentYear,
+        schoolGRNo,
+        status,
+        created_at
       ${baseQuery}
       ${whereClause}
       ORDER BY created_at DESC
@@ -678,12 +703,31 @@ exports.exportDashboardApplicantData = async (req, res) => {
     const worksheet = workbook.addWorksheet("Applicants");
 
     worksheet.columns = [
-      { header: "Applicant ID", key: "applicantID", width: 20 },
-      { header: "Student Name", key: "studentName", width: 25 },
-      { header: "School Category", key: "schoolCategory", width: 20 },
-      { header: "Class", key: "studyingInClass", width: 15 },
-      { header: "Status", key: "status", width: 15 },
-      { header: "Created At", key: "created_at", width: 25 },
+      { header: "Applicant ID",               key: "applicantID",                     width: 20 },
+      { header: "Student Name",               key: "studentName",                     width: 25 },
+      { header: "Gender",                     key: "gender",                          width: 12 },
+      { header: "File URL",                   key: "fileUrl",                         width: 30 },
+      { header: "Student B-Form",             key: "studentBForm",                    width: 20 },
+      { header: "Date of Birth",              key: "dob",                             width: 18 },
+      { header: "Religion",                   key: "religion",                        width: 15 },
+      { header: "Guardian Name",              key: "guardianName",                    width: 25 },
+      { header: "Guardian CNIC",              key: "guardianCNIC",                    width: 20 },
+      { header: "Relation",                   key: "relation",                        width: 15 },
+      { header: "Guardian Domicile District", key: "guardianDomicileDistrict",        width: 25 },
+      { header: "Guardian Contact Number",    key: "guardianContactNumber",           width: 22 },
+      { header: "Guardian Annual Income",     key: "guardianannualIncome",            width: 22 },
+      { header: "Guardian WhatsApp Number",   key: "guardianContactWhattsappNumber",  width: 25 },
+      { header: "Postal Address",             key: "postalAddress",                   width: 30 },
+      { header: "Division",                   key: "division",                        width: 18 },
+      { header: "District",                   key: "district",                        width: 18 },
+      { header: "School Name",                key: "schoolName",                      width: 30 },
+      { header: "School Category",            key: "schoolCategory",                  width: 20 },
+      { header: "School SEMIS Code",          key: "schoolSemisCode",                 width: 20 },
+      { header: "Class",                      key: "studyingInClass",                 width: 12 },
+      { header: "Enrollment Year",            key: "enrollmentYear",                  width: 18 },
+      { header: "School GR No",               key: "schoolGRNo",                      width: 18 },
+      { header: "Status",                     key: "status",                          width: 15 },
+      { header: "Created At",                 key: "created_at",                      width: 25 },
     ];
 
     worksheet.addRows(data);
