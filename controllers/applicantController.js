@@ -579,3 +579,117 @@ exports.getApplicantPDFinfo = async (req, res) => {
     });
   }
 };
+
+exports.getIsApplicantVerified = async (req, res) => {
+  const { userId } = req.user;
+
+  try {
+
+    const [documents] = await queryRunner(
+      `SELECT documentName, status, remark, fileUrl FROM applicant_document WHERE applicantID = ?`,
+      [userId]
+    );
+
+    // Check parent income certification is provided or not
+    const incomeDoc = documents.find(doc => doc.documentName === 'Parents / Guardian Income Certficaition');
+    const isIncomeMissing = !incomeDoc || !incomeDoc.fileUrl;
+    if (isIncomeMissing) {
+      return res.status(200).json({ message: 'Parents / Guardian Income Certficate is not provided.', status: 'rejected', editDocument: true });
+    }
+
+    const query = `
+    SELECT application_status, application_remark,
+    is_age_verified, is_gurdian_salary_verified,
+    is_school_verified, is_document_verified
+    FROM applicants_info WHERE applicantID = ?`;
+
+    const selectResult = await queryRunner(query, [userId]);
+    let applicant;
+
+    if (selectResult[0].length > 0) {
+      applicant = selectResult[0][0];
+      const { is_age_verified, is_gurdian_salary_verified, is_school_verified, is_document_verified } = applicant;
+
+      const verifications = [is_age_verified, is_gurdian_salary_verified, is_school_verified, is_document_verified];
+
+      // Check if any verification is still pending (null)
+      const isPending = verifications.some(v => v === null);
+
+      // Check if any verification was rejected (false or 'false')
+      const isRejected = verifications.some(v => v === false || v === 'false');
+
+      if (isRejected) {
+        return res.status(200).json({
+          statusCode: 200,
+          status: 'rejected',
+          message: applicant.application_remark,
+        });
+      }
+
+      if (isPending) {
+        return res.status(200).json({
+          statusCode: 200,
+          status: "pending",
+          message: "Your Application Process is in pending."
+        });
+      }
+    }
+
+    // Check if any document has not been reviewed by admin yet
+    const isAllChecked = documents.some(doc => doc.status === null || doc.status === 'null');
+    if (isAllChecked) {
+      return res.status(200).json({ status: 'in review',message: 'Your document is in review' });
+    }
+
+    // Check all documents are verified/correct by admin
+    const allApproved = documents.every(doc => doc.status === 'correct');
+    if (!allApproved) {
+      return res.status(200).json({ status: 'rejected', message: 'Document Verification failed', editDocument: true });
+    }
+
+    // All verified — handle the success case too!
+    return res.status(200).json({
+      statusCode: 200,
+      status: "completed",
+      message: "Your Application has been approved."
+    });
+
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+exports.getApplicantDocuments = async (req, res) => {
+  const { userId } = req.query;
+  try {
+    const getQuery = `SELECT id, fileUrl, filekey, documentName, status, remark FROM applicant_document WHERE applicantID = ?`;
+    const selectResult = await queryRunner(getQuery, [userId]);
+
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+

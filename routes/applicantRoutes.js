@@ -17,8 +17,10 @@ router.get("/getApplicantGuardianInfo" , verifyToken, applicantController.getApp
 router.get("/getApplicantAddressInfo" , verifyToken, applicantController.getApplicantAddressInfo);
 router.get("/getApplicantSchoolInfo" , verifyToken, applicantController.getApplicantSchoolInfo);
 router.get("/getApplicantSchoolPreference" , verifyToken, applicantController.getApplicantSchoolPreference);
-
 router.get("/getApplicantPDFinfo" , verifyToken, applicantController.getApplicantPDFinfo);
+router.get("/getApplicantDocuments" , verifyToken, applicantController.getApplicantDocuments);
+router.get("/getIsApplicantVerified" , verifyToken, applicantController.getIsApplicantVerified);
+
 
 
 module.exports = router;

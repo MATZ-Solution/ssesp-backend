@@ -7,7 +7,7 @@ exports.deleteS3File = async (fileKey) => {
   if (!fileKey) return;
 
   const params = {
-    Bucket: 'powerhouseassets',
+    Bucket: 'iccdfreelancematzsolutionsbucket',
     Key: fileKey,
   };
 
