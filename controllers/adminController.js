@@ -351,7 +351,7 @@ exports.getDashbaordApplicantRecentData = async (req, res) => {
 
   try {
 
-    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, created_at
+    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, guardianDomicileDistrict, created_at
      FROM applicants_info
      WHERE status = ?
      ORDER BY created_at DESC 
@@ -399,7 +399,7 @@ exports.getDashbaordApplicantData = async (req, res) => {
     let conditions = [];
 
     if (status) {
-      conditions.push(` status = ?`);
+      conditions.push(` application_status = ?`);
       params.push(status);
     }
 
@@ -417,15 +417,18 @@ exports.getDashbaordApplicantData = async (req, res) => {
       conditions.push(` studyingInClass = ? `);
       params.push(studentClass)
     }
-
+    
     if (schoolType) {
       conditions.push(` schoolCategory = ? `);
       params.push(schoolType);
     }
 
+    conditions.push(` status = ? `);
+    params.push('completed');
+
     let whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, application_stage, created_at
+    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, application_status, application_stage, created_at
     ${baseQuery}
     ${whereClause}
     ORDER BY created_at DESC 

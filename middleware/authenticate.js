@@ -33,7 +33,7 @@ const verifyToken = async (req, res, next) => {
     if (err.name === "TokenExpiredError") {
       return res.status(401).json({ message: "Token expired" });
     }
-    return res.status(400).json({
+    return res.status(401).json({
       message: "Invalid token",
       error: err.message,
     });
