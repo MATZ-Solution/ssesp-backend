@@ -765,7 +765,7 @@ exports.getDashbaordApplicantTesting = async (req, res) => {
     const getQuery = `SELECT 
     applicantID, studentName, schoolCategory, studyingInClass, application_status, application_stage, created_at 
     FROM applicants_info 
-    WHERE applicantID IN (4830, 109) 
+    WHERE applicantID IN (4830, 109, 9126) 
     ORDER BY created_at DESC;`
 
     const selectResult = await queryRunner(getQuery);
