@@ -281,12 +281,12 @@ exports.adminVerifyDocument = async function (req, res) {
 
     if (allApproved && !isIncomeMissing) {
       await queryRunner(
-        `UPDATE applicants_info SET application_status = ?, is_document_verified = ?, application_remark = ? WHERE applicantID = ?`,
+        `UPDATE applicants_info SET application_status = ?, is_document_verified = ?, application_remark = ?, updated_at = NOW() WHERE applicantID = ?`,
         ['completed', 'true', null, applicantID]
       );
     } else {
       await queryRunner(
-        `UPDATE applicants_info SET application_status = ?, application_remark = ?, is_document_verified = ? WHERE applicantID = ?`,
+        `UPDATE applicants_info SET application_status = ?, application_remark = ?, is_document_verified = ?, updated_at = NOW() WHERE applicantID = ?`,
         ['in review', 'Document Verification Failed', 'false', applicantID]
       );
     }
@@ -352,7 +352,7 @@ exports.getDashbaordApplicantRecentData = async (req, res) => {
 
   try {
 
-    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, created_at
+    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, guardianDomicileDistrict, created_at
      FROM applicants_info
      WHERE status = ?
      ORDER BY created_at DESC 
@@ -400,7 +400,7 @@ exports.getDashbaordApplicantData = async (req, res) => {
     let conditions = [];
 
     if (status) {
-      conditions.push(` status = ?`);
+      conditions.push(` application_status = ?`);
       params.push(status);
     }
 
@@ -424,9 +424,12 @@ exports.getDashbaordApplicantData = async (req, res) => {
       params.push(schoolType);
     }
 
+    conditions.push(` status = ? `);
+    params.push('completed');
+
     let whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, status, application_stage, created_at
+    const getQuery = `SELECT applicantID, studentName, schoolCategory, studyingInClass, application_status, application_stage, created_at
     ${baseQuery}
     ${whereClause}
     ORDER BY created_at DESC 
@@ -599,6 +602,44 @@ exports.getApplicantSchoolInfo = async (req, res) => {
         data: selectResult[0],
         previousSchool: prevSchoolResult[0]
       });
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+// Testing
+
+exports.getDashbaordApplicantTesting = async (req, res) => {
+
+  try {
+
+    const getQuery = `SELECT 
+    applicantID, studentName, schoolCategory, studyingInClass, application_status, application_stage, created_at 
+    FROM applicants_info 
+    WHERE applicantID IN (53, 54) 
+    ORDER BY created_at DESC;`
+
+    const selectResult = await queryRunner(getQuery);
+
+    if (selectResult[0].length > 0) {
+
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+
     } else {
       res.status(200).json({
         data: [],

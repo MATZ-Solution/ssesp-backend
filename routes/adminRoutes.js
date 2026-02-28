@@ -28,4 +28,8 @@ router.get("/getApplicantSchoolInfo" , verifyTokenAdmin, authorizeRoles("admin")
 // router.post("/signUp", adminController.adminSignUp);
 // router.post("/changePasword", adminController.changePasword);
 
+// Testing
+router.get("/getDashbaordApplicantTestingData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordApplicantTesting);
+
+
 module.exports = router;
