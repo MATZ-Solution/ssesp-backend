@@ -663,6 +663,7 @@ exports.getIsApplicantVerified = async (req, res) => {
           statusCode: 200,
           status: 'rejected',
           message: applicant.application_remark,
+          editDocument: true
         });
       }
 
@@ -731,7 +732,6 @@ exports.getApplicantDocuments = async (req, res) => {
     });
   }
 };
-
 
 // delete s3 document
 exports.deleteS3Document = async (req, res) => {

@@ -30,6 +30,7 @@ router.get("/getApplicantSchoolInfo" , verifyTokenAdmin, authorizeRoles("admin")
 
 // Testing
 router.get("/getDashbaordApplicantTestingData", verifyTokenAdmin, authorizeRoles("admin"), adminController.getDashbaordApplicantTesting);
+router.put("/resetDashbaordApplicantTesting/:applicationID", verifyTokenAdmin, authorizeRoles("admin"), adminController.resetDashbaordApplicantTesting);
 
 
 module.exports = router;

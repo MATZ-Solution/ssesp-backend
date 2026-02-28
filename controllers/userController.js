@@ -11,74 +11,74 @@ const {
 require("dotenv").config();
 
 // ###################### user Create #######################################
-exports.signUp = async function (req, res) {
+// exports.signUp = async function (req, res) {
 
-  const { email } = req.body;
-  try {
-    const query = `SELECT email FROM applicants where email = ?`;
-    const selectResult = await queryRunner(query, [email]);
+//   const { email } = req.body;
+//   try {
+//     const query = `SELECT email FROM applicants where email = ?`;
+//     const selectResult = await queryRunner(query, [email]);
 
-    if (selectResult[0].length > 0) {
-      return res.status(404).json({
-        statusCode: 200,
-        message: `User already exists on this email`,
-      });
-    }
+//     if (selectResult[0].length > 0) {
+//       return res.status(404).json({
+//         statusCode: 200,
+//         message: `User already exists on this email`,
+//       });
+//     }
 
-    const insertQuery = `INSERT INTO applicants(email) VALUES (?) `;
-    const insertResult = await queryRunner(insertQuery, [email]);
+//     const insertQuery = `INSERT INTO applicants(email) VALUES (?) `;
+//     const insertResult = await queryRunner(insertQuery, [email]);
 
-    if (insertResult[0].affectedRows > 0) {
-      const applicantID = `SSESP` + insertResult[0].insertId;
-      const insertID = insertResult[0].insertId;
+//     if (insertResult[0].affectedRows > 0) {
+//       const applicantID = `SSESP` + insertResult[0].insertId;
+//       const insertID = insertResult[0].insertId;
 
-      const hashApplicationID = await bcrypt.hash(applicantID, 10);
+//       const hashApplicationID = await bcrypt.hash(applicantID, 10);
 
-      const updateQuery = `UPDATE applicants SET applicationID = ? WHERE id = ?`;
-      const updateResult = await queryRunner(updateQuery, [
-        hashApplicationID,
-        insertID,
-      ]);
+//       const updateQuery = `UPDATE applicants SET applicationID = ? WHERE id = ?`;
+//       const updateResult = await queryRunner(updateQuery, [
+//         hashApplicationID,
+//         insertID,
+//       ]);
 
-      if (updateResult[0].affectedRows > 0) {
+//       if (updateResult[0].affectedRows > 0) {
 
-        const emailTemplate = applicationIDTemplate(applicantID);
+//         const emailTemplate = applicationIDTemplate(applicantID);
 
-        let emailStatus = await sendEmail(email, "Application ID", emailTemplate);
+//         let emailStatus = await sendEmail(email, "Application ID", emailTemplate);
 
-        if (!emailStatus.success) {
-          const deleteQuery = `DELETE FROM applicants WHERE id = ?`;
-          const updateResult = await queryRunner(deleteQuery, [insertID]);
-          if (updateResult[0].affectedRows > 0) {
-            return res.status(500).json({
-              message: "Failed To send email.",
-            });
-          }
-        }
+//         if (!emailStatus.success) {
+//           const deleteQuery = `DELETE FROM applicants WHERE id = ?`;
+//           const updateResult = await queryRunner(deleteQuery, [insertID]);
+//           if (updateResult[0].affectedRows > 0) {
+//             return res.status(500).json({
+//               message: "Failed To send email.",
+//             });
+//           }
+//         }
 
-        return res.status(200).json({
-          message: "User added successfully",
-          // applicantID: applicantID,
-        });
-      } else {
-        return res.status(200).json({
-          statusCode: 200,
-          message: "Failed to add user",
-        });
-      }
-    } else {
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Failed to add user",
-      });
-    }
-  } catch (error) {
-    console.log("error: ", error);
-    return res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+//         return res.status(200).json({
+//           message: "User added successfully",
+//           // applicantID: applicantID,
+//         });
+//       } else {
+//         return res.status(200).json({
+//           statusCode: 200,
+//           message: "Failed to add user",
+//         });
+//       }
+//     } else {
+//       return res.status(200).json({
+//         statusCode: 200,
+//         message: "Failed to add user",
+//       });
+//     }
+//   } catch (error) {
+//     console.log("error: ", error);
+//     return res.status(500).json({
+//       message: error.message,
+//     });
+//   }
+// };
 // // ######################  user Create #######################################
 
 // // ###################### SignIn user start #######################################

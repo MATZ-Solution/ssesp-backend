@@ -626,7 +626,7 @@ exports.getDashbaordApplicantTesting = async (req, res) => {
     const getQuery = `SELECT 
     applicantID, studentName, schoolCategory, studyingInClass, application_status, application_stage, created_at 
     FROM applicants_info 
-    WHERE applicantID IN (53, 54) 
+    WHERE applicantID IN (4830, 109) 
     ORDER BY created_at DESC;`
 
     const selectResult = await queryRunner(getQuery);
@@ -643,6 +643,45 @@ exports.getDashbaordApplicantTesting = async (req, res) => {
       res.status(200).json({
         data: [],
         message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+exports.resetDashbaordApplicantTesting = async (req, res) => {
+
+  const { applicationID } = req.params
+  try {
+    const resetQuery1 = `UPDATE applicants_info SET 
+    application_status = ?, application_stage = ?, application_remark = ?, 
+    is_age_verified = ?, is_gurdian_salary_verified = ?, is_school_verified = ?, 
+    is_document_verified = ? WHERE applicantID = ?`
+    const resetParams1 = ['pending', null, null, null, null, null, null, applicationID]
+
+    const resetQuery2 = `UPDATE applicant_document SET 
+    status = ?, remark = ? WHERE applicantID = ?`
+    const resetParams2 = [null, null, applicationID]
+
+    const selectResult1 = await queryRunner(resetQuery1, resetParams1);
+    const selectResult2 = await queryRunner(resetQuery2, resetParams2);
+
+    if (selectResult1[0].affectedRows > 0 && selectResult2[0].affectedRows > 0) {
+
+      res.status(200).json({
+        statusCode: 200,
+        message: "Reset successfull",
+      });
+
+    } else {
+      res.status(200).json({
+        message: "Failed to reset.",
       });
     }
   } catch (error) {

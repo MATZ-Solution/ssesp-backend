@@ -20,6 +20,8 @@ const upload = multer({
     s3: s3,
     bucket: config.bucketName,
     acl: 'public-read',
+    // contentType: multerS3.AUTO_CONTENT_TYPE,
+    // contentDisposition: 'inline',
     key: function (req, file, cb) {
       cb(null, Date.now().toString() + '-' + file.originalname);
     },
