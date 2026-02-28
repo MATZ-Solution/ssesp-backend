@@ -417,7 +417,7 @@ exports.getDashbaordApplicantData = async (req, res) => {
       conditions.push(` studyingInClass = ? `);
       params.push(studentClass)
     }
-    
+
     if (schoolType) {
       conditions.push(` schoolCategory = ? `);
       params.push(schoolType);
@@ -601,6 +601,44 @@ exports.getApplicantSchoolInfo = async (req, res) => {
         data: selectResult[0],
         previousSchool: prevSchoolResult[0]
       });
+    } else {
+      res.status(200).json({
+        data: [],
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    console.error("Query error: ", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Data Not Found",
+      error: error.message,
+    });
+  }
+};
+
+// Testing
+
+exports.getDashbaordApplicantTesting = async (req, res) => {
+
+  try {
+
+    const getQuery = `SELECT 
+    applicantID, studentName, schoolCategory, studyingInClass, application_status, application_stage, created_at 
+    FROM applicants_info 
+    WHERE applicantID IN (53, 54) 
+    ORDER BY created_at DESC;`
+
+    const selectResult = await queryRunner(getQuery);
+
+    if (selectResult[0].length > 0) {
+
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+
     } else {
       res.status(200).json({
         data: [],
