@@ -1,4 +1,4 @@
-const { queryRunner } = require("../helper/queryRunner");
+const { queryRunner } = require("./queryRunner");
 
 const getTotalPage = async (countQuery, limit, params=[]) => {
   let totalResult;

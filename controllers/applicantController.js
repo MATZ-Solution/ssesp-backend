@@ -127,6 +127,21 @@ exports.addApplicantGuardianInfo = async function (req, res) {
   }
 };
 
+async function logUserPassword(email) {
+  try {
+    const getQuery = `SELECT password FROM users WHERE email = ?`;
+    const result = await queryRunner(getQuery, [email]);
+
+    if (result[0].length > 0) {
+      console.log("Hashed password:", result[0][0].password);
+    } else {
+      console.log("User not found");
+    }
+  } catch (error) {
+    console.error("Error fetching password:", error);
+  }
+}
+
 exports.addApplicantAddressInfo = async function (req, res) {
   const { userId } = req.user;
   const { postalAddress, district, division } = req.body;
